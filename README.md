@@ -33,7 +33,7 @@ If you want a highly sophisticated feature, you can hire me to do that in your o
 
 Before you get started, wire up the Router dependencies:
 
-```injectablephp
+```php
 $onRequestProcess = new OnRequestProcess(
                         new RouteResolver(
                             new Container()
@@ -59,7 +59,7 @@ $router = new Router(
 First parameter is the url paths which you want the route to match, and the second parameter
 could be a closure or a callback function that the route would call once the route matches.
 
-```injectablephp
+```php
 $route = $router->getRoute();
 
 $route->get('/', function() {
@@ -69,7 +69,7 @@ $route->get('/', function() {
 
 If you want to keep things organized, you can also resolve through a class method, like so:
 
-```injectablephp
+```php
 $route->get('/', [HomePage::class, 'methodName']);
 ```
 
@@ -79,13 +79,13 @@ RequestInterceptors can be used to intercept a request before it moves to the ne
 
 For example, if you have an admin url path: /admin, and you want to check if a user is logged in before processing the request, you use the request interceptor. Let's see an example:
 
-```injectablephp
+```php
 $route->get('admin', [AdminController::class, 'adminDashboard'], [IsAuthenticated::class]);
 ```
 
 in `isAuthenticated()` class you can have something as such:
 
-```injectablephp
+```php
 class Authenticated implements TonicsRouterRequestInterceptorInterface
 {
     /**
@@ -118,7 +118,7 @@ However, if user is authenticated, the interceptor would move to the next life c
 
 To add more request interceptors, simply do:
 
-```injectablephp
+```php
 $route->get('admin', 
     [AdminController::class, 'adminDashboard'], 
     [IsAuthenticated::class, MoreInterceptor::class, EvenMoreInterceptor::class]
@@ -128,7 +128,7 @@ $route->get('admin',
 ### Route Required parameters
 To match a dynamic url parameter you do:
 
-```injectablephp
+```php
 $route->get('posts/:slug', function($slug) {
     return "Post with slug: $slug";
 });
@@ -139,12 +139,12 @@ to `blog-post-title`.
 
 Alternatively you can do
 
-```injectablephp
+```php
 $route->get('/posts/:slug', [PostsController::class, 'viewPost']);
 ```
 
 where `PostsController could look like:
-```injectablephp
+```php
 class PostsController
 {
     viewPost($slug)
@@ -161,7 +161,7 @@ you can share route attributes, such as route interceptors, parent url paths, et
 
 instead of doing this:
 
-```injectablephp
+```php
 $route->get('admin/login', [LoginController::class, 'showLoginForm'], [SpecialInterceptor::class, RedirectAuthenticated::class]);
 $route->post('admin/login', [LoginController::class, 'login'], [SpecialInterceptor::class]);
 $route->post('admin/logout', [LoginController::class, 'logout'], [SpecialInterceptor::class]);
@@ -169,7 +169,7 @@ $route->post('admin/logout', [LoginController::class, 'logout'], [SpecialInterce
 
 do this:
 
-```injectablephp
+```php
 $route->group('admin', function (Route $route){
     $route->get('login', [LoginController::class, 'showLoginForm'], [RedirectAuthenticated::class]);
     $route->post('login', [LoginController::class, 'login']);
@@ -180,7 +180,7 @@ The end goal is identical to the above one but this is better organized.
 
 You could also nest a group:
 
-```injectablephp
+```php
 $route->group('/admin/posts', function (Route $route){
             #---------------------------------
         # POST CATEGORIES...
