@@ -12,7 +12,7 @@ or close source or just use whatever license you want. However, I won't be liabl
 Why am I saying this:
 
 * This library is a library that would be incorporated in my personal project which is only geared towards end users and not developers
-* I don't follow semver, you might want to follow it in your own fork? (I don't care)
+* I don't follow semver, you might want to follow it in your own fork?
 * If anything in my main projects calls for breaking changes, I'll break it
 * I shared it in the hope that someone would tear apart the code and incorporate it in their own project or hopefully learn something from it
 * people have different use case, for example, you can't use regex for parameters with this library, but it could easily be added, likewise, there are a thousand of features that could be added which goes against keeping things simple (in my book). However, security patches are highly welcomed.
