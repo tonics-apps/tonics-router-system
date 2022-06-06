@@ -1,0 +1,24 @@
+{
+    "name": "devsrealm/tonics-router-system",
+    "description": "An Imaginary PHP Router System For Tonics Projects",
+    "type": "library",
+    "license": "",
+    "autoload": {
+        "psr-4": {
+            "Devsrealm\\TonicsRouterSystem\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "DevsrealmGuy",
+            "email": "faruq@devsrealm.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+      "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "kahlan/kahlan": "dev-master"
+    }
+}

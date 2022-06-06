@@ -1,0 +1,214 @@
+A Trie based PHP Router System For Tonics Projects. 
+
+This would serve as a base router for tonics web apps, the router is different from most PHP Router 
+in the sense that it doesn't t use regex for matching urls, it instead uses a tree data structure where every path is
+hierarchically organized making it faster for finding both static or dynamic url.
+
+## Important Info
+
+This project doesn't have a license, so, you can download it and make it either open source 
+or close source or just use whatever license you want. However, I won't be liable for any damage, I repeat, I won't be liable for any damage.
+
+Why am I saying this:
+
+* This library is a library that would be incorporated in my personal project which is only geared towards end users and not developers
+* I don't follow semver, you might wanna follow it in your own fork? (I don't care)
+* If anything in my main projects calls for breaking changes, I'll break it
+* I shared it in the hope that someone would tear apart the code and incorporate it in their own project or hopefully learn something from it
+* people have different use case, for example, you can't use regex for parameters with this library, 
+* but it could easily be added, likewise, there are a thousand of features that could be added which goes against keeping things simple (in my book). However, security patches are highly welcomed.
+
+If you want a highly sophisticated feature, you can hire me to do that in your own fork or library.
+
+## Requirements
+* PHP 8.0 and above
+* PHP mbstring extension enabled.
+
+## Basic Explanation of How The Route Matching Works
+
+1. Step One, check if url exist in the staticURLS property of the $routeNodeTree, if it does, good, we return it, and we are done matching, if it doesn't, then we gotta walk the tree (goto Step 2):
+2. Before we walk the tree, we trim the REQUEST_URL (the one in GLOBAL $_SERVER) by solidus, e.g, if you have: `/home/in/` or `///home/in` then the trimmed result should be `home/in`, having done that, we split the trimmed result by solidus, which should give us `[home], [in],` once that is done, we prepend a solidus to the split result, giving `[/], [home], [in]`. Now, let's walk the tree (step 3):
+3. We recursively loop the nodes starting from `[/]` till we match a route node, once a route node is matched we store it in staticURLS property if the route is truly static. On a new route request, we jump back to (Step 1)
+
+## Documentation
+
+Before you get started, wire up the Router dependencies:
+
+```injectablephp
+$onRequestProcess = new OnRequestProcess(
+                        new RouteResolver(
+                            new Container()
+                        ),
+                        new Route(
+                            new RouteTreeGenerator(
+                                new RouteTreeGeneratorState(), new RouteNode()
+                                )
+                        )
+                );
+
+$router = new Router(
+    $onRequestProcess,
+    $onRequestProcess->getRouteObject(),
+    new Response(
+        $onRequestProcess, new RequestInput()
+        )
+    );
+```
+
+### Basic routing
+
+First parameter is the url paths which you want the route to match, and the second parameter
+could be a closure or a callback function that the route would call once the route matches.
+
+```injectablephp
+$route = $router->getRoute();
+
+$route->get('/', function() {
+    return 'Welcome To My Home Page';
+});
+```
+
+If you want to keep things organized, you can also resolve through a class method, like so:
+
+```injectablephp
+$route->get('/', [HomePage::class, 'methodName']);
+```
+
+### Request Interceptors
+Some call it middleware, `requestInterceptor` sounds plain and simple to me. 
+RequestInterceptors can be used to intercept a request before it moves to the next life cycle or to other request interceptors.
+
+For example, if you have an admin url path: /admin, and you want to check if a user is logged in before processing the request, you use the request interceptor. Let's see an example:
+
+```injectablephp
+$route->get('admin', [AdminController::class, 'adminDashboard'], [IsAuthenticated::class]);
+```
+
+in `isAuthenticated()` class you can have something as such:
+
+```injectablephp
+class Authenticated implements TonicsRouterRequestInterceptorInterface
+{
+    /**
+     * @inheritDoc
+     */
+    public function handle(OnRequestProcess $request): void
+    {
+       if (UserData::isAuthenticated() === false){
+           # If this is for admin, then redirect to admin login
+           if (str_starts_with($request->getRequestURL(), '/admin')){
+               redirect(route('admin.login'));
+           }
+
+           # If this is for customer, then redirect to customer login
+           if (str_starts_with($request->getRequestURL(), '/customer')){
+               redirect(route('customer.login'));
+           }
+
+           # Else...
+           SimpleState::displayUnauthorizedErrorMessage();
+       }
+    }
+}
+```
+
+We implemented the `TonicsRouterRequestInterceptorInterface` (it is a must to implement the interface to use the request interceptor) which provides a handle method with the $request object.
+Inside the handle method, I am checking if user is not authenticated, and thus redirecting them to their proper destination. 
+
+However, if user is authenticated, the interceptor would move to the next life cycle in the route state, the next life cycle could be a new request interceptor or a class method or a callback delegation.
+
+To add more request interceptors, simply do:
+
+```injectablephp
+$route->get('admin', 
+    [AdminController::class, 'adminDashboard'], 
+    [IsAuthenticated::class, MoreInterceptor::class, EvenMoreInterceptor::class]
+    );
+```
+
+### Route Required parameters
+To match a dynamic url parameter you do:
+
+```injectablephp
+$route->get('posts/:slug', function($slug) {
+    return "Post with slug: $slug";
+});
+```
+
+where you capture the slug from the url, for example, if user visits /posts/blog-post-title, you get access 
+to `blog-post-title`.
+
+Alternatively you can do
+
+```injectablephp
+$route->get('/posts/:slug', [PostsController::class, 'viewPost']);
+```
+
+where `PostsController could look like:
+```injectablephp
+class PostsController
+{
+    viewPost($slug)
+    {
+        return "Post with slug: $slug";
+    }
+}
+```
+
+### Route Groups
+
+With the route group you could organize route in a tree like fashion, the good thing about this approach is  
+you can share route attributes, such as route interceptors, parent url paths, etc. across a large number of routes without needing to define those attributes on each individual route.
+
+instead of doing this:
+
+```injectablephp
+$route->get('admin/login', [LoginController::class, 'showLoginForm'], [SpecialInterceptor::class, RedirectAuthenticated::class]);
+$route->post('admin/login', [LoginController::class, 'login'], [SpecialInterceptor::class]);
+$route->post('admin/logout', [LoginController::class, 'logout'], [SpecialInterceptor::class]);
+```
+
+do this:
+
+```injectablephp
+$route->group('admin', function (Route $route){
+    $route->get('login', [LoginController::class, 'showLoginForm'], [RedirectAuthenticated::class]);
+    $route->post('login', [LoginController::class, 'login']);
+    $route->post('logout', [LoginController::class, 'logout']);
+}, [SpecialInterceptor::class]);
+```
+The end goal is identical to the above one but this is better organized.
+
+You could also nest a group:
+
+```injectablephp
+$route->group('/admin/posts', function (Route $route){
+            #---------------------------------
+        # POST CATEGORIES...
+    #---------------------------------
+    $route->group('/category', function (Route $route){
+        $route->get('', [PostCategoryController::class, 'index']);
+        $route->get(':category/edit', [PostCategoryController::class, 'edit']);
+        $route->get('create', [PostCategoryController::class, 'create']);
+        $route->post('store', [PostCategoryController::class, 'store']);
+        $route->post(':category/trash', [PostCategoryController::class, 'trash']);
+        $route->post( '/trash/multiple', [PostCategoryController::class, 'trashMultiple']);
+        $route->match(['post', 'put', 'patch'], ':category/update', [PostCategoryController::class, 'update']);
+        $route->match(['post', 'delete'], ':category/delete', [PostCategoryController::class, 'delete']);
+    }, alias: 'category');
+
+}, [StartSession::class, CSRFGuard::class, Authenticated::class, PostAccess::class]);
+```
+
+### Route HTTP Verbs
+
+* `$route->get(string $url, array|Closure $callback, array $requestInterceptor = [])`
+* `$route->post(string $url, array|Closure $callback, array $requestInterceptor = [])`
+* `$route->put(string $url, array|Closure $callback, array $requestInterceptor = [])`
+* `$route->patch(string $url, array|Closure $callback, array $requestInterceptor = [])`
+* `$route->delete(string $url, array|Closure $callback, array $requestInterceptor = [])`
+* `$route->match(array $method, string $url, \Closure|array $callback, array $requestInterceptor = [])`
+
+With match, you can match multiple HTTP verbs in one fell swoop.
+
+More Documentation...
