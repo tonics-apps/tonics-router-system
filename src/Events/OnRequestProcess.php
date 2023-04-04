@@ -1,4 +1,18 @@
 <?php
+/*
+ * Copyright 2023 Ahmed Olayemi F. <olayemi@tonics.app or devsrealmer@gmail.com>
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 
 namespace Devsrealm\TonicsRouterSystem\Events;
 
@@ -98,6 +112,12 @@ class OnRequestProcess implements TonicsRequestInterface
         return $this->cleanUrl($url);
     }
 
+    public function getFullURL(): string
+    {
+        $http = ($this->isSecure()) ? 'https://': 'http://';
+        return $http . $this->getHost() . $this->getRequestURL();
+    }
+
     public function getRequestURLWithQueryString(): string
     {
         $queryString = http_build_query($this->getParams());
@@ -166,6 +186,17 @@ class OnRequestProcess implements TonicsRequestInterface
 
     protected function setHeaders(array $headers){
         $this->headers = $headers;
+    }
+
+    public function addToHeader($key, $data)
+    {
+        $this->headers[$key] = $data;
+        return $this;
+    }
+
+    public function removeFromHeader($key)
+    {
+        unset($this->headers[$key]);
     }
 
     public function getHeaders(): array
@@ -250,9 +281,9 @@ class OnRequestProcess implements TonicsRequestInterface
      * Default value if query parameter value is empty
      * @param \Closure|null $callback
      * Callback would be called on value if the param key value is not empty
-     * @return string|null
+     * @return string|array|null
      */
-    public function getParam(string $name, ?string $defaultValue = null, \Closure $callback = null): ?string
+    public function getParam(string $name, ?string $defaultValue = null, \Closure $callback = null): string|array|null
     {
         $paramVal = (isset($this->getParams()[$name])) ? $this->getParams()[$name] : $defaultValue;
         if ($callback && $paramVal){
@@ -270,6 +301,26 @@ class OnRequestProcess implements TonicsRequestInterface
     public function hasParam(string $name): bool
     {
         return array_key_exists($name, $this->getParams());
+    }
+
+    /**
+     * Check if URL contains parameter or query string key and a value.
+     *
+     * Note: String '0' is not considered empty
+     * @param string $name
+     * @return bool
+     */
+    public function hasParamAndValue(string $name): bool
+    {
+        if (!$this->hasParam($name)){
+            return false;
+        }
+
+        $value = $this->getParam($name);
+        if ($value === '0'){
+            return true;
+        }
+        return !empty($this->getParam($name));
     }
 
     /**

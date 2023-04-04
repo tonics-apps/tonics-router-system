@@ -4,20 +4,6 @@ This would serve as a base router for tonics web apps, the router is different f
 in the sense that it doesn't use regex for matching urls, it instead uses a tree data structure where every path is
 hierarchically organized making it faster for finding both static or dynamic url.
 
-## Important Info
-
-This project doesn't have a license, so, you can download it and make it either open source 
-or close source or just use whatever license you want. However, I won't be liable for any damage, I repeat, I won't be liable for any damage.
-
-Why am I saying this:
-
-* This library is a library that would be incorporated in my personal project which is only geared towards end users and not developers
-* If anything in my main projects calls for breaking changes, I'll break it
-* I shared it in the hope that someone would tear apart the code and incorporate it in their own project or hopefully learn something from it
-* people have different use case, for example, you can't use regex for parameters with this library, but it could easily be added, likewise, there are a thousand of features that could be added which goes against keeping things simple (in my book). However, security patches are highly welcomed.
-
-If you want a highly sophisticated feature, you can hire me to do that in your own fork or library.
-
 ## Requirements
 * PHP 8.0 and above
 * PHP mbstring extension enabled.

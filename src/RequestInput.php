@@ -1,4 +1,18 @@
 <?php
+/*
+ * Copyright 2023 Ahmed Olayemi F. <olayemi@tonics.app or devsrealmer@gmail.com>
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 
 namespace Devsrealm\TonicsRouterSystem;
 
@@ -22,9 +36,9 @@ class RequestInput implements TonicsRouterRequestInputInterface, TonicsRouterReq
     /**
      * @param mixed $currentHttpGlobalVariable
      */
-    protected function setCurrentHttpGlobalVariable(array $currentHttpGlobalVariable): void
+    protected function setCurrentHttpGlobalVariable(array|\stdClass $currentHttpGlobalVariable): void
     {
-        $this->currentHttpGlobalVariable = $currentHttpGlobalVariable;
+        $this->currentHttpGlobalVariable = (array)$currentHttpGlobalVariable;
     }
 
 
@@ -172,7 +186,7 @@ class RequestInput implements TonicsRouterRequestInputInterface, TonicsRouterReq
     }
 
     /**
-     * Get key in HTTP var, if key does exist, you get the data (could be an array or a string), else an empty string.
+     * Get key in HTTP var, if key does exist, you get the data (could be an array or a string or even null), else an empty string.
      *
      * @param string $key
      * key to get, to get a nested array key, you can delimit it with the $sep, the default is a dot notation, e.g
@@ -183,7 +197,7 @@ class RequestInput implements TonicsRouterRequestInputInterface, TonicsRouterReq
      * Default is a dot-notation
      * @return array|string
      */
-    public function getKeyHttpVar(string $key, array $data, string $sep = '.'): array|string
+    public function getKeyHttpVar(string $key, array $data, string $sep = '.'): array|string|null
     {
         $splitName = explode($sep, $key);
         foreach ($splitName as $value) {
