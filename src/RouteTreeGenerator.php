@@ -56,19 +56,21 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
         $this->routeTreeGeneratorState = $routeTreeGeneratorState;
         $this->currentRouteTreeGeneratorState = RouteTreeGeneratorState::TonicsInitialStateHandler;
         $this->routeNodeTree = $routeNode;
+        $this->routeNodeTree->{'potentialStaticURLS'} = []; // not strictly a static url per se, but can speed up insertion
         $this->routeNodeTree->{'staticURLS'} = [];
         $this->routeNodeTree->{'alias'} = [];
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->routeTreeGeneratorState::setRoutePath([]);
+        $this->routeTreeGeneratorState::setRoutePathFlat('');
         $this->isStatic = true;
         $this->currentRouteKey = 0;
         $this->currentRouteTreeGeneratorState = RouteTreeGeneratorState::TonicsInitialStateHandler;
     }
 
-    public function initRouteTreeGeneratorState(array $routeSettings)
+    public function initRouteTreeGeneratorState(array $routeSettings): void
     {
         $this->currentRouteSettings = [
             'url' => $routeSettings['url'],
@@ -92,10 +94,10 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
         $len = count($this->currentRouteSettings['url']);
         for ($this->currentRouteKey = $i; $this->currentRouteKey < $len; ++$this->currentRouteKey) {
             $k = $this->currentRouteKey;
-            $routePath = $this->currentRouteSettings['url'][$k];
-            $this->currentRoutePath = $routePath;
+            $this->currentRoutePath = $this->currentRouteSettings['url'][$k];
             $this->dispatchRouteTreeGeneratorState($this->currentRouteTreeGeneratorState);
         }
+
         $methods = $routeSettings['methods'];
 
         ## Check url from array to flat string
@@ -257,7 +259,7 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
     /**
      * @param string|null $state
      */
-    public function switchRouteTreeGeneratorState(?string $state)
+    public function switchRouteTreeGeneratorState(?string $state): void
     {
         $this->currentRouteTreeGeneratorState = $state;
     }
@@ -315,6 +317,46 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
     }
 
     /**
+     * @param string $path
+     * @return bool
+     */
+    public function existInPotentialStaticURL(string $path): bool
+    {
+        return key_exists($path, $this->routeNodeTree->potentialStaticURLS);
+    }
+
+    /**
+     * @param string $path
+     * @return RouteNode
+     */
+    public function getPotentialStaticURL(string $path): RouteNode
+    {
+        $indexes = $this->routeNodeTree->potentialStaticURLS[$path];
+        $finalPos = $this->routeNodeTree;
+        foreach ($indexes as $index) {
+            // every iteration brings us closer to the depth
+            $finalPos = $finalPos->childNodes()[$index];
+        }
+        return $finalPos;
+
+        // method 2 by using the node directly:
+      //  return $this->routeNodeTree->potentialStaticURLS[$path];
+    }
+
+
+    /**
+     * @param string $path
+     * @param RouteNode $node
+     */
+    public function addToPotentialStaticURL(string $path, RouteNode $node): void
+    {
+        // dd($path);
+        $this->routeNodeTree->potentialStaticURLS[$path] = $node->getIndexToGetToPosition();
+
+        // method 2 by using the node directly:
+        // $this->routeNodeTree->potentialStaticURLS[$path] = $node;
+    }
+    /**
      * @param array $paths
      * @param RouteNode $root
      * @return RouteNode|null
@@ -322,7 +364,7 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
     public function insertNodeInAppropriatePosition(array $paths, RouteNode $root): ?RouteNode
     {
         $node = null;
-        foreach ($paths as $k => &$path){
+        foreach ($paths as $path){
             $findNode = $root->findAppropriatePosToInsertOrUpdateNode($path, $root);
 
             if ($findNode !== null){
@@ -361,7 +403,9 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
             $urlPaths =  explode('/', trim($url, '/'));
             array_unshift($urlPaths, '/');
             $root = $this->routeNodeTree;
-            foreach ($urlPaths as $k => &$path){
+            $fullPath = '';
+            foreach ($urlPaths as $path){
+                $fullPath .= $path . '/';
                 $findNode = $this->routeNodeTree->findNodeByRouteNameOrRequired($path, $root);
                 if ($findNode === null){
                     break;
@@ -372,6 +416,8 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
                 $root = $findNode;
             }
         }
+
+       // dd($fullPath);
 
         $this->setFoundURLNode($findNode);
         $this->setFoundURLRequiredParams($params);

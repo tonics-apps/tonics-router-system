@@ -139,6 +139,20 @@ class Route
      * @param Closure|array $callback
      * @param array $requestInterceptor
      * @param string $alias
+     * @param null $moreSettings
+     * @return $this
+     */
+    public function head(string $url, Closure|array $callback, array $requestInterceptor = [], string $alias = '', $moreSettings = null): static
+    {
+        $this->resolveRouteSettings([RequestMethods::REQUEST_TYPE_HEAD], $url,  $callback, $requestInterceptor, $alias, $moreSettings);
+        return $this;
+    }
+
+    /**
+     * @param string $url
+     * @param Closure|array $callback
+     * @param array $requestInterceptor
+     * @param string $alias
      * @return $this
      */
     public function post(string $url, Closure|array $callback, array $requestInterceptor = [], string $alias = ''): static
@@ -276,18 +290,19 @@ class Route
         }
 
         if (!empty($settings)){
-            $settings['RequestInterceptors'] = [...$settings['RequestInterceptors'], ...$requestInterceptors];
+            foreach ($requestInterceptors as $requestInterceptor){
+                $settings['RequestInterceptors'][] = $requestInterceptor;
+            }
 
-            ## Convert $requestInterceptors multi-dimentional array to array
-            $requestInterceptors = [''];
+            ## Convert $requestInterceptors multi-dimensional array to array
+            $requestInterceptors = [];
             foreach ($settings['RequestInterceptors'] as $requestInterceptor){
                 if (is_array($requestInterceptor)){
                     array_push($requestInterceptors, ...$requestInterceptor);
                     continue;
                 }
-                array_push($requestInterceptors, $requestInterceptor);
+                $requestInterceptors[] = $requestInterceptor;
             }
-            $requestInterceptors = array_values(array_filter($requestInterceptors));
 
             $routeSettings = [
                 'url' => $url,
@@ -298,7 +313,8 @@ class Route
                 'alias' => $alias,
                 'moreSettings' => $moreSettings
             ];
-            $this->routeTreeGenerator->initRouteTreeGeneratorState($routeSettings);
+
+           $this->routeTreeGenerator->initRouteTreeGeneratorState($routeSettings);
         }
 
     }

@@ -23,6 +23,7 @@ use RuntimeException;
 class RouteTreeGeneratorState
 {
     private static array $routePath = [];
+    private static string $routePathFlat = '';
 
     const TonicsInitialStateHandler = 'TonicsInitialStateHandler';
     const TonicsStaticParameterStateHandler = 'TonicsStaticParameterStateHandler';
@@ -54,12 +55,14 @@ class RouteTreeGeneratorState
     public static function TonicsStaticParameterStateHandler(RouteTreeGenerator $rtg): void
     {
         self::$routePath[] = $rtg->getCurrentRoutePath();
+        self::addPathToFlat($rtg->getCurrentRoutePath());
         self::insertNode($rtg)?->setStaticParameter(true);
     }
 
     public static function TonicsRequiredParameterStateHandler(RouteTreeGenerator $rtg): void
     {
         self::$routePath[] = $rtg->getCurrentRoutePath();
+        self::addPathToFlat($rtg->getCurrentRoutePath());
         self::insertNode($rtg)?->setRequiredParameter(true);
         $rtg->setIsStatic(false);
     }
@@ -70,12 +73,26 @@ class RouteTreeGeneratorState
      */
     private static function insertNode(RouteTreeGenerator $rtg): ?RouteNode
     {
-        $rtg->switchRouteTreeGeneratorState(self::TonicsInitialStateHandler);
+
+/*        $rtg->switchRouteTreeGeneratorState(self::TonicsInitialStateHandler);
         $resNode = $rtg->insertNodeInAppropriatePosition(self::$routePath, $rtg->getRouteNodeTree());
         if ($resNode !== null) {
             $rtg->setLastAddedRouteNode($resNode);
         }
-        return $resNode;
+        return $resNode;*/
+        $routeFlat = empty(self::$routePathFlat) ? '/' : self::$routePathFlat;
+        if ($rtg->existInPotentialStaticURL($routeFlat)){
+            return $rtg->getPotentialStaticURL($routeFlat);
+        } else {
+            $rtg->switchRouteTreeGeneratorState(self::TonicsInitialStateHandler);
+            $resNode = $rtg->insertNodeInAppropriatePosition(self::$routePath, $rtg->getRouteNodeTree());
+            if ($resNode !== null) {
+                $rtg->setLastAddedRouteNode($resNode);
+            }
+
+            $rtg->addToPotentialStaticURL($routeFlat, $resNode);
+            return $resNode;
+        }
     }
 
     /**
@@ -92,5 +109,26 @@ class RouteTreeGeneratorState
     public static function setRoutePath(array $routePath): void
     {
         self::$routePath = $routePath;
+    }
+
+    public static function addPathToFlat(string $path): void
+    {
+        self::$routePathFlat .= '/' . $path;
+    }
+
+    /**
+     * @return string
+     */
+    public static function getRoutePathFlat(): string
+    {
+        return self::$routePathFlat;
+    }
+
+    /**
+     * @param string $routePathFlat
+     */
+    public static function setRoutePathFlat(string $routePathFlat): void
+    {
+        self::$routePathFlat = $routePathFlat;
     }
 }

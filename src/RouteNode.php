@@ -21,6 +21,8 @@ use JetBrains\PhpStorm\Pure;
 
 /**
  * @property $staticURLS
+ * @property $potentialStaticURLS
+ * @property $alias
  */
 class RouteNode
 {
@@ -33,6 +35,8 @@ class RouteNode
     private bool $optionalParameter = false;
     private bool $requiredParameter = false;
     private bool $staticParameter = false;
+    private ?int $indexKey = null;
+    private array $indexToGetToPosition = [];
 
     private string $nodeAlias = '';
 
@@ -61,6 +65,13 @@ class RouteNode
     public function setParentNode(?RouteNode $parentNode): RouteNode
     {
         $this->parentNode = $parentNode;
+        if ($this->hasParent()){
+            $position = [...$this->parentNode->indexToGetToPosition, $this->indexKey];
+            $this->indexToGetToPosition = $position;
+        } else { // root
+            $this->indexToGetToPosition = [$this->indexKey];
+        }
+
         return $this;
     }
 
@@ -116,6 +127,15 @@ class RouteNode
     }
 
     /**
+     * Return true if node has parent
+     * @return bool
+     */
+    public function hasParent(): bool
+    {
+        return !empty($this->parentNode);
+    }
+
+    /**
      * Return true if there is no children in node, else, false
      * @return bool
      */
@@ -141,6 +161,7 @@ class RouteNode
             $this->nodes = $array;
         } else {
             $this->nodes[] = $node;
+            $node->indexKey = array_key_last($this->nodes);
         }
         return $this;
     }
@@ -337,7 +358,9 @@ class RouteNode
     public function findNodeByRouteNameOrRequired(string $routeName, RouteNode $node): ?RouteNode
     {
         $resNode = null;
-        foreach ($node->childNodes() as $childStaticNode) {
+        $childNodes = $node->childNodes(); // Quick Cache child nodes
+        /** @var RouteNode $childStaticNode */
+        foreach ($childNodes as $childStaticNode) {
             if ($childStaticNode->isStaticParameter() && $childStaticNode->getRouteName() === $routeName){
                 $resNode = $childStaticNode;
                 break;
@@ -347,7 +370,7 @@ class RouteNode
         // If static route-name cant be found above, could be it is a requiredParamete,
         // so, lets try it.
         if ($resNode === null){
-            foreach ($node->childNodes() as $childStaticNode) {
+            foreach ($childNodes as $childStaticNode) {
                 if($childStaticNode->isRequiredParameter()){
                     $resNode = $childStaticNode;
                     break;
@@ -368,10 +391,12 @@ class RouteNode
 
     /**
      * @param bool $staticParameter
+     * @return RouteNode
      */
-    public function setStaticParameter(bool $staticParameter): void
+    public function setStaticParameter(bool $staticParameter): RouteNode
     {
         $this->staticParameter = $staticParameter;
+        return $this;
     }
 
     /**
@@ -398,6 +423,15 @@ class RouteNode
     public function setNodeAlias(string $nodeAlias): void
     {
         $this->nodeAlias = $nodeAlias;
+    }
+
+    /**
+     * Index To Loop Through until we get to the position, this is like a shortcut
+     * @return array
+     */
+    public function getIndexToGetToPosition(): array
+    {
+        return $this->indexToGetToPosition;
     }
 
 }
