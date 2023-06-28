@@ -48,6 +48,9 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
 
     private RouteNode $routeNodeTree;
     private ?RouteNode $lastAddedRouteNode = null;
+    private ?RouteNode $lastAddedParentRouteNode = null;
+
+    private array $requestURLS = []; // only used when matching URL, not for building tree
 
     private bool $isStatic = true;
 
@@ -56,7 +59,6 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
         $this->routeTreeGeneratorState = $routeTreeGeneratorState;
         $this->currentRouteTreeGeneratorState = RouteTreeGeneratorState::TonicsInitialStateHandler;
         $this->routeNodeTree = $routeNode;
-        $this->routeNodeTree->{'potentialStaticURLS'} = []; // not strictly a static url per se, but can speed up insertion
         $this->routeNodeTree->{'staticURLS'} = [];
         $this->routeNodeTree->{'alias'} = [];
     }
@@ -67,6 +69,11 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
         $this->routeTreeGeneratorState::setRoutePathFlat('');
         $this->isStatic = true;
         $this->currentRouteKey = 0;
+        $this->currentRoutePath = '';
+
+        # If childNode is not null in the tree, then set it to the root [/]
+        $this->lastAddedParentRouteNode = null;
+
         $this->currentRouteTreeGeneratorState = RouteTreeGeneratorState::TonicsInitialStateHandler;
     }
 
@@ -97,6 +104,9 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
             $this->currentRoutePath = $this->currentRouteSettings['url'][$k];
             $this->dispatchRouteTreeGeneratorState($this->currentRouteTreeGeneratorState);
         }
+
+        $this->recursivelyUpdateTheNestedNodeUpUntilNoSiblingNode($this->lastAddedRouteNode);
+        $this->routeNodeTree->setTeleportNode([])->setLastTeleportNodeKey(null)->setTeleportNodeShortestPath(null);
 
         $methods = $routeSettings['methods'];
 
@@ -317,110 +327,163 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
     }
 
     /**
-     * @param string $path
-     * @return bool
+     * Update the nested node and steps to nested node properties in the parent nodes.
+     *
+     * This method recursively traverses the parent nodes starting from the given node,
+     * updating the nested node and steps to nested node properties based on the presence of siblings.
+     *
+     * @param RouteNode $node The node to start the update from.
      */
-    public function existInPotentialStaticURL(string $path): bool
+    public function recursivelyUpdateTheNestedNodeUpUntilNoSiblingNode(RouteNode $node): void
     {
-        return key_exists($path, $this->routeNodeTree->potentialStaticURLS);
-    }
+        $parent = $node?->parentNode();
 
-    /**
-     * @param string $path
-     * @return RouteNode
-     */
-    public function getPotentialStaticURL(string $path): RouteNode
-    {
-        $indexes = $this->routeNodeTree->potentialStaticURLS[$path];
-        $finalPos = $this->routeNodeTree;
-        foreach ($indexes as $index) {
-            // every iteration brings us closer to the depth
-            $finalPos = $finalPos->childNodes()[$index];
+        $steps = 1;
+        while ($parent !== null) {
+            if (count($parent->childNodes()) > 1) {
+                foreach ($parent->getParentRecursive($parent) as $parentNode) {
+                    if (empty($parentNode->getLastTeleportNodeKey())){
+                        continue;
+                    }
+                    if ($parent->teleportNodeExist($parentNode->getLastTeleportNodeKey())){
+                        $parentNode->removeTeleportNode($parentNode->getLastTeleportNodeKey())
+                            ->addTeleportNode($parent);
+                    }
+                }
+                $parent->setTeleportNode([])->setLastTeleportNodeKey(null)->setTeleportNodeShortestPath(null);
+                break;
+            } else {
+                $parent->addTeleportNode($node);
+            }
+            ++$steps;
+            $parent = $parent->parentNode();
         }
-        return $finalPos;
-
-        // method 2 by using the node directly:
-      //  return $this->routeNodeTree->potentialStaticURLS[$path];
     }
 
-
-    /**
-     * @param string $path
-     * @param RouteNode $node
-     */
-    public function addToPotentialStaticURL(string $path, RouteNode $node): void
-    {
-        // dd($path);
-        $this->routeNodeTree->potentialStaticURLS[$path] = $node->getIndexToGetToPosition();
-
-        // method 2 by using the node directly:
-        // $this->routeNodeTree->potentialStaticURLS[$path] = $node;
-    }
     /**
      * @param array $paths
-     * @param RouteNode $root
+     * @param RouteNode $parentNode
      * @return RouteNode|null
      */
-    public function insertNodeInAppropriatePosition(array $paths, RouteNode $root): ?RouteNode
+    public function insertNodeInAppropriatePosition(array $paths, RouteNode $parentNode): ?RouteNode
     {
         $node = null;
         foreach ($paths as $path){
-            $findNode = $root->findAppropriatePosToInsertOrUpdateNode($path, $root);
+            $findNode = $parentNode->findAppropriatePosToInsertOrUpdateNode($path, $parentNode);
 
             if ($findNode !== null){
-                $root = $findNode;
-                // if found node is a requiredParameter, then the $path is also a required type and it's on the same
+                $parentNode = $findNode;
+                // if found node is a requiredParameter, then the $path is also a required type, and it's on the same
                 // level, so, we update its settings, e.g /home/name/:in is same as /home/name/:me, `:me` would replace `:in`
                 if ($findNode->isRequiredParameter()){
-                    $findNode->setRouteName($path);
-                  //  $findNode->setFullRoutePath(ltrim(implode('/', $paths), '/'));
+                   $findNode->parentNode()->updateChildNodeKey($findNode->getRouteName(), $path, $this->currentRouteKey);
                 }
+
                 // this is useful if maybe the new path has some new settings
                 // setting it below allow for that to reflect
                 $node = $findNode;
             } else {
                 $node = new RouteNode($path);
-                $root->addNode($node);
-                $node->setParentNode($root);
-                $root = $node;
+                $parentNode->addNode($node);
+                $node->setParentNode($parentNode);
+                $parentNode = $node;
             }
         }
 
+        $this->lastAddedParentRouteNode = $parentNode;
         return $node;
     }
 
     /**
+     * @param $url
+     * @return mixed|null
+     */
+    private function canMatchStatic($url): mixed
+    {
+        $findNode = null;
+        if (isset($this->routeNodeTree->staticURLS[$url])){
+            $findNode = $this->routeNodeTree->staticURLS[$url];
+        }
+
+        return $findNode;
+    }
+
+    /**
+     * Matches URL and return the foundNode, otherwise, it returns null
      * @param string $url
+     * @param bool $removeLeadingSlash
+     * @return RouteNode|null
+     */
+    public function match(string $url, bool $removeLeadingSlash = true): ?RouteNode
+    {
+        return $this->findURL($url, $removeLeadingSlash)?->getFoundURLNode();
+    }
+
+    /**
+     * @param string $url
+     * @param bool $removeLeadingSlash
      * @return TonicsRouterFoundURLMethodsInterface|null
      */
-    public function findURL(string $url): ?TonicsRouterFoundURLMethodsInterface
+    public function findURL(string $url, bool $removeLeadingSlash = true): ?TonicsRouterFoundURLMethodsInterface
     {
-        $params = [];
-        $url = '/' . $this->cleanUrl($url); $findNode = null;
-        if (key_exists($url, $this->routeNodeTree->staticURLS)){
-            $findNode = $this->routeNodeTree->staticURLS[$url];
-        } else {
-            $urlPaths =  explode('/', trim($url, '/'));
-            array_unshift($urlPaths, '/');
+        if ($removeLeadingSlash){
+            $url = $this->removingLeadingSlash($url);
+        }
+
+        $findNode = $this->canMatchStatic($url);
+
+        if ($findNode === null){
+            $urlPaths =  explode('/', $url);
+            $urlPaths[0] = '/';
             $root = $this->routeNodeTree;
-            $fullPath = '';
-            foreach ($urlPaths as $path){
-                $fullPath .= $path . '/';
+
+            $len = count($urlPaths);
+            for ($i = 0; $i < $len; ++$i) {
+                $path = $urlPaths[$i];
                 $findNode = $this->routeNodeTree->findNodeByRouteNameOrRequired($path, $root);
+
                 if ($findNode === null){
                     break;
                 }
-                if ($findNode->isRequiredParameter()){
-                    $params[] = $path;
+
+                # Nothing to do no more
+               if ($len === count($findNode->getIndexToGetToPosition())){ break; }
+                
+                # If so, skip.
+                if (
+                    ($findNode?->teleportNodesExist() && $teleportNode = $findNode->getTeleportNode($len))
+                    ||
+                    ($teleportNode = $findNode?->getTeleportNodeShortestPath())
+                )
+                {
+                    $lastIndex = array_key_last($teleportNode->getIndexToGetToPosition());
+                    if ($teleportNode->isStaticParameter()){
+                        if (isset($urlPaths[$lastIndex]) && $teleportNode->getIndexToGetToPosition()[$lastIndex] === $urlPaths[$lastIndex]){
+                            if (str_starts_with($url, $findNode->getFullRoutePath())){
+                                $i = $lastIndex;
+                                $findNode = $teleportNode;
+                                $findNode->teleported($teleportNode);
+                            }
+                        }
+                    } else {
+                        $i = $lastIndex;
+                        $findNode = $teleportNode;
+                        $findNode->teleported($teleportNode);
+                    }
                 }
+
                 $root = $findNode;
             }
+
+            if ($findNode !== null){
+                if ($len != count($findNode->getIndexToGetToPosition())){
+                    $findNode = null;
+                }
+            }
+
+            $this->requestURLS = $urlPaths;
         }
-
-       // dd($fullPath);
-
         $this->setFoundURLNode($findNode);
-        $this->setFoundURLRequiredParams($params);
         return $this;
     }
 
@@ -456,7 +519,8 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
                             }
                         }
                     }
-                    $url = '/' . $this->cleanUrl(implode('/', $urlPaths));
+                    # Total nonsense, figure out a way to clean this, I don't think we need any cleanURL...
+                    $url = '/' . $this->cleanURLForNameURLegacy(implode('/', $urlPaths));
                 }
                 ## For Assoc Params
                 else {
@@ -472,12 +536,25 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
         return '';
     }
 
-    public function cleanUrl(string $url): string
+    public function cleanURLForNameURLegacy(string $url)
     {
         ## D preg_replace converts multiple slashes to one.
         ## FILTER_SANITIZE_URL remove illegal chars from the url
         ## rtrim remove slash from the end e.g /name/book/ becomes  /name/book
         return trim(filter_var(preg_replace("#//+#", "\\1/", $url), FILTER_SANITIZE_URL), '/');
+    }
+    /**
+     * @param string $url
+     * @return string
+     */
+    public function replaceMultipleSlashesToOne(string $url): string
+    {
+        return preg_replace("#//+#", "\\1/", $url);
+    }
+
+    public function removingLeadingSlash(string $url): string
+    {
+        return rtrim($url, '/');
     }
 
     /**
@@ -528,5 +605,31 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
     public function setIsStatic(bool $isStatic): void
     {
         $this->isStatic = $isStatic;
+    }
+
+    /**
+     * @return RouteNode|null
+     */
+    public function getLastAddedParentRouteNode(): ?RouteNode
+    {
+        return $this->lastAddedParentRouteNode;
+    }
+
+    /**
+     * @return array
+     */
+    public function getRequestURLS(): array
+    {
+        return $this->requestURLS;
+    }
+
+    /**
+     * @param array $requestURLS
+     * @return RouteTreeGenerator
+     */
+    public function setRequestURLS(array $requestURLS): RouteTreeGenerator
+    {
+        $this->requestURLS = $requestURLS;
+        return $this;
     }
 }

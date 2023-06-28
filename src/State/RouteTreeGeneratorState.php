@@ -63,8 +63,11 @@ class RouteTreeGeneratorState
     {
         self::$routePath[] = $rtg->getCurrentRoutePath();
         self::addPathToFlat($rtg->getCurrentRoutePath());
-        self::insertNode($rtg)?->setRequiredParameter(true);
-        $rtg->setIsStatic(false);
+        $node = self::insertNode($rtg);
+        if ($node){
+            $node->setRequiredParameter(true)->parentNode()->setPositionOfLastAddedRequiredParamChildNode($node->getRouteName());
+            $rtg->setIsStatic(false);
+        }
     }
 
     /**
@@ -74,25 +77,12 @@ class RouteTreeGeneratorState
     private static function insertNode(RouteTreeGenerator $rtg): ?RouteNode
     {
 
-/*        $rtg->switchRouteTreeGeneratorState(self::TonicsInitialStateHandler);
-        $resNode = $rtg->insertNodeInAppropriatePosition(self::$routePath, $rtg->getRouteNodeTree());
+       $rtg->switchRouteTreeGeneratorState(self::TonicsInitialStateHandler);
+        $resNode = $rtg->insertNodeInAppropriatePosition([$rtg->getCurrentRoutePath()], $rtg->getLastAddedParentRouteNode() ?? $rtg->getRouteNodeTree());
         if ($resNode !== null) {
             $rtg->setLastAddedRouteNode($resNode);
         }
-        return $resNode;*/
-        $routeFlat = empty(self::$routePathFlat) ? '/' : self::$routePathFlat;
-        if ($rtg->existInPotentialStaticURL($routeFlat)){
-            return $rtg->getPotentialStaticURL($routeFlat);
-        } else {
-            $rtg->switchRouteTreeGeneratorState(self::TonicsInitialStateHandler);
-            $resNode = $rtg->insertNodeInAppropriatePosition(self::$routePath, $rtg->getRouteNodeTree());
-            if ($resNode !== null) {
-                $rtg->setLastAddedRouteNode($resNode);
-            }
-
-            $rtg->addToPotentialStaticURL($routeFlat, $resNode);
-            return $resNode;
-        }
+        return $resNode;
     }
 
     /**

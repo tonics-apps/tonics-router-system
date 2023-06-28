@@ -43,6 +43,13 @@ trait RouterFindURL
      */
     public function getFoundURLRequiredParams(): array
     {
+        if (empty($this->foundURLRequiredParams)){
+            $diff = [];
+            if ($this->getFoundURLNode()){
+                $diff = array_diff($this->getRequestURLS(), $this->getFoundURLNode()->getIndexToGetToPosition());
+            }
+            $this->setFoundURLRequiredParams(array_values($diff));
+        }
         return $this->foundURLRequiredParams;
     }
 

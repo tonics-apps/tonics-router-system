@@ -13,21 +13,25 @@ use Devsrealm\TonicsRouterSystem\RouteTreeGenerator;
 use Devsrealm\TonicsRouterSystem\State\RouteTreeGeneratorState;
 use Kahlan\Filter\Filters;
 
-//$commandLine = $this->commandLine();
-// Disable Monkey Patching
-//$commandLine->commandLine()->set('include', []);
-
 Filters::apply($this, 'run', function($next) {
     $scope = $this->suite()->root()->scope(); // The top most describe scope.
 
-    ## Router And Request
-    $routeTreeGeneratorState = new RouteTreeGeneratorState();
-    $routeNode = new RouteNode();
-    $onRequestProcess = new OnRequestProcess(new RouteResolver(new Container()), new Route(new RouteTreeGenerator($routeTreeGeneratorState, $routeNode)));
+    class RouteSetup {
 
-    $router = new Router($onRequestProcess,
-        $onRequestProcess->getRouteObject(),
-        new Response($onRequestProcess, new RequestInput()));
-    $scope->router = $router;
+        public function wireRouter(): Router
+        {
+            ## Router And Request
+            $routeTreeGeneratorState = new RouteTreeGeneratorState();
+            $routeNode = new RouteNode();
+            $onRequestProcess = new OnRequestProcess(new RouteResolver(new Container()), new Route(new RouteTreeGenerator($routeTreeGeneratorState, $routeNode)));
+
+            return new Router($onRequestProcess,
+                $onRequestProcess->getRouteObject(),
+                new Response($onRequestProcess, new RequestInput()));
+        }
+    }
+
+    $routeSetup = new RouteSetup();
+    $scope->router = $routeSetup;
     return $next();
 });

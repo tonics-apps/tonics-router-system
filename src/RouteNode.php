@@ -24,10 +24,15 @@ use JetBrains\PhpStorm\Pure;
  * @property $potentialStaticURLS
  * @property $alias
  */
+#[\AllowDynamicProperties]
 class RouteNode
 {
     private string $routeName;
     private ?RouteNode $parentNode = null;
+    private array $teleportNode = [];
+    private ?RouteNode $teleportNodeShortestPath = null;
+    private mixed $lastTeleportNodeKey = null;
+   // private ?RouteNode $teleportNode = null;
     private array $settings = [];
     private string $fullRoutePath = '';
     // Could contain a list of child nodes of a current node,
@@ -35,9 +40,10 @@ class RouteNode
     private bool $optionalParameter = false;
     private bool $requiredParameter = false;
     private bool $staticParameter = false;
-    private ?int $indexKey = null;
+    private mixed $indexKey = null;
     private array $indexToGetToPosition = [];
 
+    private mixed $positionOfLastAddedRequiredParamChildNode = null;
     private string $nodeAlias = '';
 
     public function __construct($routeName = 'tree')
@@ -73,6 +79,27 @@ class RouteNode
         }
 
         return $this;
+    }
+
+    /**
+     * Updates the oldKey with the newKey name including the nodes associative key,
+     * and the indexToGetToPosition
+     * @param $oldKey
+     * @param $newKey
+     * @param $indexToGetToPosition
+     * @return void
+     */
+    public function updateChildNodeKey($oldKey, $newKey, $indexToGetToPosition): void
+    {
+        if ($oldKey === $newKey){
+            return;
+        }
+        if (isset($this->nodes[$oldKey])){
+            $this->nodes[$newKey] = $this->nodes[$oldKey];
+            $this->nodes[$newKey]->setRouteName($newKey);
+            $this->nodes[$newKey]->indexToGetToPosition[$indexToGetToPosition] = $newKey;
+            unset($this->nodes[$oldKey]);
+        }
     }
 
     /**
@@ -160,9 +187,10 @@ class RouteNode
             array_splice($array, $position, 0, [$node]);
             $this->nodes = $array;
         } else {
-            $this->nodes[] = $node;
-            $node->indexKey = array_key_last($this->nodes);
+            $this->nodes[$node->getRouteName()] = $node;
+            $node->indexKey = $node->getRouteName();
         }
+
         return $this;
     }
 
@@ -300,6 +328,21 @@ class RouteNode
         return $this->settings[$requestMethod]['requestInterceptors'];
     }
 
+    /**
+     * Get parent recursively
+     * @param RouteNode $node
+     * @return Generator
+     */
+    public function getParentRecursive(RouteNode $node) : \Generator
+    {
+        $parent = $node?->parentNode();
+        while ($parent !== null) {
+            /**@var RouteNode $parent */
+            yield $parent;
+            $parent = $parent?->parentNode();
+        }
+    }
+
 
     /**
      * To use this function, simply test if the $node has a children first, okay?
@@ -329,19 +372,21 @@ class RouteNode
         $resNode = null;
         ## This is for required parameter
         if (isset($routeName[0]) && $routeName[0] === ':'){
-            return $this->nodeChildHasARequiredParameter($node);
+            if ($node->positionOfLastAddedRequiredParamChildNode){
+                $resNode = $node->childNodes()[$node->positionOfLastAddedRequiredParamChildNode] ?? null;
+            }
+
+            return $resNode;
         }
 
-        foreach ($node->childNodes() as $childStaticNode) {
-            if ($childStaticNode->isStaticParameter() && $childStaticNode->getRouteName() === $routeName){
-                $resNode = $childStaticNode;
-            }
-        }
-        return $resNode;
+        return $node->childNodes()[$routeName] ?? null;
     }
 
-
-    public function nodeChildHasARequiredParameter(RouteNode $node)
+    /**
+     * @param RouteNode $node
+     * @return mixed|null
+     */
+    public function nodeChildHasARequiredParameter(RouteNode $node): mixed
     {
         $res = null;
         foreach ($node->childNodes() as $childNode)
@@ -353,31 +398,22 @@ class RouteNode
         return $res;
     }
 
-
-
+    /**
+     * @param string $routeName
+     * @param RouteNode $node
+     * @return RouteNode|null
+     */
     public function findNodeByRouteNameOrRequired(string $routeName, RouteNode $node): ?RouteNode
     {
         $resNode = null;
-        $childNodes = $node->childNodes(); // Quick Cache child nodes
-        /** @var RouteNode $childStaticNode */
-        foreach ($childNodes as $childStaticNode) {
-            if ($childStaticNode->isStaticParameter() && $childStaticNode->getRouteName() === $routeName){
-                $resNode = $childStaticNode;
-                break;
-            }
+        $childNodes = $node->childNodes();
+        # If we can match asap, we do and return
+        # otherwise, we check the childNodes that have a requiredParam if there is any, and return that instead
+        if (isset($childNodes[$routeName])){
+            $resNode =  $childNodes[$routeName];
+        } else {
+            $resNode = $node->childNodes()[$node->positionOfLastAddedRequiredParamChildNode] ?? null;
         }
-
-        // If static route-name cant be found above, could be it is a requiredParamete,
-        // so, lets try it.
-        if ($resNode === null){
-            foreach ($childNodes as $childStaticNode) {
-                if($childStaticNode->isRequiredParameter()){
-                    $resNode = $childStaticNode;
-                    break;
-                }
-            }
-        }
-
         return $resNode;
     }
 
@@ -433,5 +469,153 @@ class RouteNode
     {
         return $this->indexToGetToPosition;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getPositionOfLastAddedRequiredParamChildNode(): mixed
+    {
+        return $this->positionOfLastAddedRequiredParamChildNode;
+    }
+
+    /**
+     * @param mixed $positionOfLastAddedRequiredParamChildNode
+     */
+    public function setPositionOfLastAddedRequiredParamChildNode(mixed $positionOfLastAddedRequiredParamChildNode): void
+    {
+        $this->positionOfLastAddedRequiredParamChildNode = $positionOfLastAddedRequiredParamChildNode;
+    }
+
+    /**
+     * This would return the very last child node until the moment where there are no sibling nodes,
+     * this is useful for jumping to this very node, superfast when retrieving long route that doesn't have much
+     * sibling node down the road.
+     * @return array
+     */
+    public function getTeleportNodes(): array
+    {
+        return $this->teleportNode;
+    }
+
+    /**
+     * @param $key
+     * @return RouteNode|null
+     */
+    public function getTeleportNode($key): ?RouteNode
+    {
+        if ($this->teleportNodeExist($key)){
+            return $this->teleportNode[$key];
+        }
+        return null;
+    }
+
+    /**
+     * @return bool
+     */
+    public function teleportNodesExist(): bool
+    {
+        return !empty($this->teleportNode);
+    }
+
+    /**
+     * @param $key
+     * @return bool
+     */
+    public function teleportNodeExist($key): bool
+    {
+        return isset($this->teleportNode[$key]);
+    }
+
+    /**
+     * @param RouteNode|null $teleportNode
+     * @return RouteNode
+     */
+    public function addTeleportNode(?RouteNode $teleportNode): RouteNode
+    {
+        $key = count($teleportNode->getIndexToGetToPosition());
+        $this->teleportNode[$key] = $teleportNode;
+        $this->setLastTeleportNodeKey($key);
+
+        $this->updateTeleportShortedNodePath();
+        return $this;
+    }
+
+    private function updateTeleportShortedNodePath(): void
+    {
+        if (!empty($this->teleportNode)){
+            // $this->setTeleportNodeShortestPath($this->teleportNode[min(array_keys($this->teleportNode))]);
+            $this->setTeleportNodeShortestPath($this->teleportNode[array_key_first($this->teleportNode)]);
+        }
+    }
+
+    /**
+     * This would remove $teleportNode and update the shortestTeleportNodePath
+     * @param RouteNode|null $teleportNode
+     * @return void
+     */
+    public function teleported(?RouteNode $teleportNode): void
+    {
+        $key = count($teleportNode->getIndexToGetToPosition());
+        if ($this->teleportNodeExist($key)){
+            $this->removeTeleportNode($key);
+            $this->updateTeleportShortedNodePath();
+        }
+    }
+
+    /**
+     * @param $key
+     * @return $this
+     */
+    public function removeTeleportNode($key): static
+    {
+        unset($this->teleportNode[$key]);
+        return $this;
+    }
+
+    /**
+     * @param array $nodes
+     * @return $this
+     */
+    public function setTeleportNode(array $nodes): static
+    {
+        $this->teleportNode = $nodes;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLastTeleportNodeKey(): mixed
+    {
+        return $this->lastTeleportNodeKey;
+    }
+
+    /**
+     * @param mixed $lastTeleportNodeKey
+     * @return RouteNode
+     */
+    public function setLastTeleportNodeKey(mixed $lastTeleportNodeKey): RouteNode
+    {
+        $this->lastTeleportNodeKey = $lastTeleportNodeKey;
+        return $this;
+    }
+
+    /**
+     * @return RouteNode|null
+     */
+    public function getTeleportNodeShortestPath(): ?RouteNode
+    {
+        return $this->teleportNodeShortestPath;
+    }
+
+    /**
+     * @param RouteNode|null $teleportNodeShortestPath
+     */
+    public function setTeleportNodeShortestPath(?RouteNode $teleportNodeShortestPath): RouteNode
+    {
+        $this->teleportNodeShortestPath = $teleportNodeShortestPath;
+        return $this;
+    }
+
 
 }

@@ -7,7 +7,7 @@ use Devsrealm\TonicsRouterSystem\RequestInput;
 describe("RequestInput", function () {
 
     /*** @var RequestInput $requestInput */
-    $requestInput = $this->router->getResponse()->getRequestInput();
+    $requestInput = $this->router->wireRouter()->getResponse()->getRequestInput();
     $data = [
         'one' => [
             'two' => [
