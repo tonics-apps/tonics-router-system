@@ -71,7 +71,6 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
         $this->currentRouteKey = 0;
         $this->currentRoutePath = '';
 
-        # If childNode is not null in the tree, then set it to the root [/]
         $this->lastAddedParentRouteNode = null;
 
         $this->currentRouteTreeGeneratorState = RouteTreeGeneratorState::TonicsInitialStateHandler;
@@ -338,7 +337,6 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
     {
         $parent = $node?->parentNode();
 
-        $steps = 1;
         while ($parent !== null) {
             if (count($parent->childNodes()) > 1) {
                 foreach ($parent->getParentRecursive($parent) as $parentNode) {
@@ -355,7 +353,6 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
             } else {
                 $parent->addTeleportNode($node);
             }
-            ++$steps;
             $parent = $parent->parentNode();
         }
     }

@@ -315,16 +315,11 @@ describe( "Routes", function () {
     $route = $router->getRoute();
     $routeTree = $route->getRouteTreeGenerator();
 
-    $route->get("/a/hi/1/2/3", function (){});
-    $route->get("/a/hi/1/2/:i", function (){});
-    $route->get("/a/hii/1/2/:i", function (){});
-    $route->get("/:i/hi/1/2/:i", function (){});
-    $route->get("/c/hi/1/2/:i", function (){});
-    $route->get("/d/hi/1/2/:i", function (){});
-    $route->get("/e/hi/1/2/:i", function (){});
-
-    $route->get("/post/:id/:id/:id", function (){});
-    $route->get("/post/:id/:cat/3", function (){});
+    defineRoutes([
+        "/a/hi/1/2/3", "/a/hi/1/2/:i",  "/a/hii/1/2/:i",
+        "/:i/hi/1/2/:i", "/c/hi/1/2/:i", "/d/hi/1/2/:i",
+        "/e/hi/1/2/:i", "/post/:id/:id/:id", "/post/:id/:cat/3",
+    ], $route);
 
     context("Must Match URLs ", function () use ($routeTree) {
 
@@ -358,9 +353,9 @@ describe( "Routes 2", function () {
     $route = $router->getRoute();
     $routeTree = $route->getRouteTreeGenerator();
 
-    $route->get( '/r', function (){});
-    $route->get( '/r/:w', function (){});
-    $route->get( '/r/:w/:r', function (){});
+    defineRoutes([
+        '/r', '/r/:w', '/r/:w/:r'
+    ], $route);
 
     context("Must Match URLs ", function () use ($routeTree) {
 
@@ -391,15 +386,11 @@ describe( "Routes 3", function () {
     $route = $router->getRoute();
     $routeTree = $route->getRouteTreeGenerator();
 
-    $route->get( '/c', function (){});
-    $route->get( '/c/:s', function (){});
-    $route->get( '/c/:s/:s/:s/:s', function (){});
-    $route->get( '/c/:s/:s/d/:s', function (){});
-
-    $route->get( '/users/:selected_user', function (){});
-    $route->get( '/users/:selected_user/search/code', function (){});
-    $route->get( '/users/:selected_user/ssh-keys', function (){});
-    $route->get( '/users/:selected_user/ssh-keys/:key_id', function (){});
+    defineRoutes([
+        '/c', '/c/:s', '/c/:s/:s/:s/:s', '/c/:s/:s/d/:s',
+        '/users/:selected_user', '/users/:selected_user/search/code',
+        '/users/:selected_user/ssh-keys', '/users/:selected_user/ssh-keys/:key_id',
+    ], $route);
 
     context("Must Match URLs ", function () use ($routeTree) {
 
@@ -429,18 +420,25 @@ describe( "Routes BITBUCKET", function () {
     $router = $this->router->wireRouter();
     $route = $router->getRoute();
     $routeTree = $route->getRouteTreeGenerator();
-    tonicsRoutesForBitBucket($route);
 
 
-    context("Must Match URLs ", function () use ($routeTree) {
+    context("Must Match URLs ", function () use ($route, $routeTree) {
         $urls = json_decode(<<<JSO
 {"\/addon":"\/addon","\/addon\/linkers":"\/addon\/linkers","\/addon\/linkers\/tonics-linker_key":"\/addon\/linkers\/:linker_key","\/addon\/linkers\/tonics-linker_key\/values":"\/addon\/linkers\/:linker_key\/values","\/addon\/linkers\/tonics-linker_key\/values\/tonics-value_id":"\/addon\/linkers\/:linker_key\/values\/:value_id","\/hook_events":"\/hook_events","\/hook_events\/tonics-subject_type":"\/hook_events\/:subject_type","\/pullrequests\/tonics-selected_user":"\/pullrequests\/:selected_user","\/repositories":"\/repositories","\/repositories\/tonics-workspace":"\/repositories\/:workspace","\/repositories\/tonics-workspace\/tonics-repo_slug":"\/repositories\/:workspace\/:repo_slug","\/repositories\/tonics-workspace\/tonics-repo_slug\/branch-restrictions":"\/repositories\/:workspace\/:repo_slug\/branch-restrictions","\/repositories\/tonics-workspace\/tonics-repo_slug\/branch-restrictions\/tonics-id":"\/repositories\/:workspace\/:repo_slug\/branch-restrictions\/:id","\/repositories\/tonics-workspace\/tonics-repo_slug\/branching-model":"\/repositories\/:workspace\/:repo_slug\/branching-model","\/repositories\/tonics-workspace\/tonics-repo_slug\/branching-model\/settings":"\/repositories\/:workspace\/:repo_slug\/branching-model\/settings","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/approve":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/approve","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/comments":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/comments","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/comments\/tonics-comment_id":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/comments\/:comment_id","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/properties\/tonics-app_key\/tonics-property_name":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/properties\/:app_key\/:property_name","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/pullrequests":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/pullrequests","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/reports":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/reports","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/reports\/tonics-reportId":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/reports\/:reportId","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/reports\/tonics-reportId\/annotations":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/reports\/:reportId\/annotations","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/reports\/tonics-reportId\/annotations\/tonics-annotationId":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/reports\/:reportId\/annotations\/:annotationId","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/statuses":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/statuses","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/statuses\/build":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/statuses\/build","\/repositories\/tonics-workspace\/tonics-repo_slug\/commit\/tonics-commit\/statuses\/build\/tonics-key":"\/repositories\/:workspace\/:repo_slug\/commit\/:commit\/statuses\/build\/:key","\/repositories\/tonics-workspace\/tonics-repo_slug\/commits":"\/repositories\/:workspace\/:repo_slug\/commits","\/repositories\/tonics-workspace\/tonics-repo_slug\/commits\/tonics-revision":"\/repositories\/:workspace\/:repo_slug\/commits\/:revision","\/repositories\/tonics-workspace\/tonics-repo_slug\/components":"\/repositories\/:workspace\/:repo_slug\/components","\/repositories\/tonics-workspace\/tonics-repo_slug\/components\/tonics-component_id":"\/repositories\/:workspace\/:repo_slug\/components\/:component_id","\/repositories\/tonics-workspace\/tonics-repo_slug\/default-reviewers":"\/repositories\/:workspace\/:repo_slug\/default-reviewers","\/repositories\/tonics-workspace\/tonics-repo_slug\/default-reviewers\/tonics-target_username":"\/repositories\/:workspace\/:repo_slug\/default-reviewers\/:target_username","\/repositories\/tonics-workspace\/tonics-repo_slug\/deploy-keys":"\/repositories\/:workspace\/:repo_slug\/deploy-keys","\/repositories\/tonics-workspace\/tonics-repo_slug\/deploy-keys\/tonics-key_id":"\/repositories\/:workspace\/:repo_slug\/deploy-keys\/:key_id","\/repositories\/tonics-workspace\/tonics-repo_slug\/deployments":"\/repositories\/:workspace\/:repo_slug\/deployments","\/repositories\/tonics-workspace\/tonics-repo_slug\/deployments\/tonics-deployment_uuid":"\/repositories\/:workspace\/:repo_slug\/deployments\/:deployment_uuid","\/repositories\/tonics-workspace\/tonics-repo_slug\/deployments_config\/environments\/tonics-environment_uuid\/variables":"\/repositories\/:workspace\/:repo_slug\/deployments_config\/environments\/:environment_uuid\/variables","\/repositories\/tonics-workspace\/tonics-repo_slug\/deployments_config\/environments\/tonics-environment_uuid\/variables\/tonics-variable_uuid":"\/repositories\/:workspace\/:repo_slug\/deployments_config\/environments\/:environment_uuid\/variables\/:variable_uuid","\/repositories\/tonics-workspace\/tonics-repo_slug\/diff\/tonics-spec":"\/repositories\/:workspace\/:repo_slug\/diff\/:spec","\/repositories\/tonics-workspace\/tonics-repo_slug\/diffstat\/tonics-spec":"\/repositories\/:workspace\/:repo_slug\/diffstat\/:spec","\/repositories\/tonics-workspace\/tonics-repo_slug\/downloads":"\/repositories\/:workspace\/:repo_slug\/downloads","\/repositories\/tonics-workspace\/tonics-repo_slug\/downloads\/tonics-filename":"\/repositories\/:workspace\/:repo_slug\/downloads\/:filename","\/repositories\/tonics-workspace\/tonics-repo_slug\/environments":"\/repositories\/:workspace\/:repo_slug\/environments","\/repositories\/tonics-workspace\/tonics-repo_slug\/environments\/tonics-environment_uuid":"\/repositories\/:workspace\/:repo_slug\/environments\/:environment_uuid","\/repositories\/tonics-workspace\/tonics-repo_slug\/environments\/tonics-environment_uuid\/changes":"\/repositories\/:workspace\/:repo_slug\/environments\/:environment_uuid\/changes","\/repositories\/tonics-workspace\/tonics-repo_slug\/filehistory\/tonics-commit\/tonics-path":"\/repositories\/:workspace\/:repo_slug\/filehistory\/:commit\/:path","\/repositories\/tonics-workspace\/tonics-repo_slug\/forks":"\/repositories\/:workspace\/:repo_slug\/forks","\/repositories\/tonics-workspace\/tonics-repo_slug\/hooks":"\/repositories\/:workspace\/:repo_slug\/hooks","\/repositories\/tonics-workspace\/tonics-repo_slug\/hooks\/tonics-uid":"\/repositories\/:workspace\/:repo_slug\/hooks\/:uid","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues":"\/repositories\/:workspace\/:repo_slug\/issues","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/export":"\/repositories\/:workspace\/:repo_slug\/issues\/export","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/export\/tonics-repo_name-issues-tonics-task_id.zip":"\/repositories\/:workspace\/:repo_slug\/issues\/export\/:repo_name-issues-task_id.zip","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/import":"\/repositories\/:workspace\/:repo_slug\/issues\/import","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/tonics-issue_id":"\/repositories\/:workspace\/:repo_slug\/issues\/:issue_id","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/tonics-issue_id\/attachments":"\/repositories\/:workspace\/:repo_slug\/issues\/:issue_id\/attachments","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/tonics-issue_id\/attachments\/tonics-path":"\/repositories\/:workspace\/:repo_slug\/issues\/:issue_id\/attachments\/:path","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/tonics-issue_id\/changes":"\/repositories\/:workspace\/:repo_slug\/issues\/:issue_id\/changes","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/tonics-issue_id\/changes\/tonics-change_id":"\/repositories\/:workspace\/:repo_slug\/issues\/:issue_id\/changes\/:change_id","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/tonics-issue_id\/comments":"\/repositories\/:workspace\/:repo_slug\/issues\/:issue_id\/comments","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/tonics-issue_id\/comments\/tonics-comment_id":"\/repositories\/:workspace\/:repo_slug\/issues\/:issue_id\/comments\/:comment_id","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/tonics-issue_id\/vote":"\/repositories\/:workspace\/:repo_slug\/issues\/:issue_id\/vote","\/repositories\/tonics-workspace\/tonics-repo_slug\/issues\/tonics-issue_id\/watch":"\/repositories\/:workspace\/:repo_slug\/issues\/:issue_id\/watch","\/repositories\/tonics-workspace\/tonics-repo_slug\/merge-base\/tonics-revspec":"\/repositories\/:workspace\/:repo_slug\/merge-base\/:revspec","\/repositories\/tonics-workspace\/tonics-repo_slug\/milestones":"\/repositories\/:workspace\/:repo_slug\/milestones","\/repositories\/tonics-workspace\/tonics-repo_slug\/milestones\/tonics-milestone_id":"\/repositories\/:workspace\/:repo_slug\/milestones\/:milestone_id","\/repositories\/tonics-workspace\/tonics-repo_slug\/patch\/tonics-spec":"\/repositories\/:workspace\/:repo_slug\/patch\/:spec","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines-config\/caches":"\/repositories\/:workspace\/:repo_slug\/pipelines-config\/caches","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines-config\/caches\/tonics-cache_uuid":"\/repositories\/:workspace\/:repo_slug\/pipelines-config\/caches\/:cache_uuid","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines-config\/caches\/tonics-cache_uuid\/content-uri":"\/repositories\/:workspace\/:repo_slug\/pipelines-config\/caches\/:cache_uuid\/content-uri","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines":"\/repositories\/:workspace\/:repo_slug\/pipelines","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines\/tonics-pipeline_uuid":"\/repositories\/:workspace\/:repo_slug\/pipelines\/:pipeline_uuid","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines\/tonics-pipeline_uuid\/steps":"\/repositories\/:workspace\/:repo_slug\/pipelines\/:pipeline_uuid\/steps","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines\/tonics-pipeline_uuid\/steps\/tonics-step_uuid":"\/repositories\/:workspace\/:repo_slug\/pipelines\/:pipeline_uuid\/steps\/:step_uuid","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines\/tonics-pipeline_uuid\/steps\/tonics-step_uuid\/log":"\/repositories\/:workspace\/:repo_slug\/pipelines\/:pipeline_uuid\/steps\/:step_uuid\/log","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines\/tonics-pipeline_uuid\/steps\/tonics-step_uuid\/logs\/tonics-log_uuid":"\/repositories\/:workspace\/:repo_slug\/pipelines\/:pipeline_uuid\/steps\/:step_uuid\/logs\/:log_uuid","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines\/tonics-pipeline_uuid\/steps\/tonics-step_uuid\/test_reports":"\/repositories\/:workspace\/:repo_slug\/pipelines\/:pipeline_uuid\/steps\/:step_uuid\/test_reports","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines\/tonics-pipeline_uuid\/steps\/tonics-step_uuid\/test_reports\/test_cases":"\/repositories\/:workspace\/:repo_slug\/pipelines\/:pipeline_uuid\/steps\/:step_uuid\/test_reports\/test_cases","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines\/tonics-pipeline_uuid\/steps\/tonics-step_uuid\/test_reports\/test_cases\/tonics-test_case_uuid\/test_case_reasons":"\/repositories\/:workspace\/:repo_slug\/pipelines\/:pipeline_uuid\/steps\/:step_uuid\/test_reports\/test_cases\/:test_case_uuid\/test_case_reasons","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines\/tonics-pipeline_uuid\/stopPipeline":"\/repositories\/:workspace\/:repo_slug\/pipelines\/:pipeline_uuid\/stopPipeline","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines_config":"\/repositories\/:workspace\/:repo_slug\/pipelines_config","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines_config\/build_number":"\/repositories\/:workspace\/:repo_slug\/pipelines_config\/build_number","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines_config\/schedules":"\/repositories\/:workspace\/:repo_slug\/pipelines_config\/schedules","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines_config\/schedules\/tonics-schedule_uuid":"\/repositories\/:workspace\/:repo_slug\/pipelines_config\/schedules\/:schedule_uuid","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines_config\/schedules\/tonics-schedule_uuid\/executions":"\/repositories\/:workspace\/:repo_slug\/pipelines_config\/schedules\/:schedule_uuid\/executions","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines_config\/ssh\/key_pair":"\/repositories\/:workspace\/:repo_slug\/pipelines_config\/ssh\/key_pair","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines_config\/ssh\/known_hosts":"\/repositories\/:workspace\/:repo_slug\/pipelines_config\/ssh\/known_hosts","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines_config\/ssh\/known_hosts\/tonics-known_host_uuid":"\/repositories\/:workspace\/:repo_slug\/pipelines_config\/ssh\/known_hosts\/:known_host_uuid","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines_config\/variables":"\/repositories\/:workspace\/:repo_slug\/pipelines_config\/variables","\/repositories\/tonics-workspace\/tonics-repo_slug\/pipelines_config\/variables\/tonics-variable_uuid":"\/repositories\/:workspace\/:repo_slug\/pipelines_config\/variables\/:variable_uuid","\/repositories\/tonics-workspace\/tonics-repo_slug\/properties\/tonics-app_key\/tonics-property_name":"\/repositories\/:workspace\/:repo_slug\/properties\/:app_key\/:property_name","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests":"\/repositories\/:workspace\/:repo_slug\/pullrequests","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/activity":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/activity","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/activity":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/activity","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/approve":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/approve","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/comments":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/comments","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/comments\/tonics-comment_id":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/comments\/:comment_id","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/commits":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/commits","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/decline":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/decline","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/diff":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/diff","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/diffstat":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/diffstat","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/merge":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/merge","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/merge\/task-status\/tonics-task_id":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/merge\/task-status\/:task_id","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/patch":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/patch","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/request-changes":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/request-changes","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pull_request_id\/statuses":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pull_request_id\/statuses","\/repositories\/tonics-workspace\/tonics-repo_slug\/pullrequests\/tonics-pullrequest_id\/properties\/tonics-app_key\/tonics-property_name":"\/repositories\/:workspace\/:repo_slug\/pullrequests\/:pullrequest_id\/properties\/:app_key\/:property_name","\/repositories\/tonics-workspace\/tonics-repo_slug\/refs":"\/repositories\/:workspace\/:repo_slug\/refs","\/repositories\/tonics-workspace\/tonics-repo_slug\/refs\/branches":"\/repositories\/:workspace\/:repo_slug\/refs\/branches","\/repositories\/tonics-workspace\/tonics-repo_slug\/refs\/branches\/tonics-name":"\/repositories\/:workspace\/:repo_slug\/refs\/branches\/:name","\/repositories\/tonics-workspace\/tonics-repo_slug\/refs\/tags":"\/repositories\/:workspace\/:repo_slug\/refs\/tags","\/repositories\/tonics-workspace\/tonics-repo_slug\/refs\/tags\/tonics-name":"\/repositories\/:workspace\/:repo_slug\/refs\/tags\/:name","\/repositories\/tonics-workspace\/tonics-repo_slug\/src":"\/repositories\/:workspace\/:repo_slug\/src","\/repositories\/tonics-workspace\/tonics-repo_slug\/src\/tonics-commit\/tonics-path":"\/repositories\/:workspace\/:repo_slug\/src\/:commit\/:path","\/repositories\/tonics-workspace\/tonics-repo_slug\/versions":"\/repositories\/:workspace\/:repo_slug\/versions","\/repositories\/tonics-workspace\/tonics-repo_slug\/versions\/tonics-version_id":"\/repositories\/:workspace\/:repo_slug\/versions\/:version_id","\/repositories\/tonics-workspace\/tonics-repo_slug\/watchers":"\/repositories\/:workspace\/:repo_slug\/watchers","\/snippets":"\/snippets","\/snippets\/tonics-workspace":"\/snippets\/:workspace","\/snippets\/tonics-workspace\/tonics-encoded_id":"\/snippets\/:workspace\/:encoded_id","\/snippets\/tonics-workspace\/tonics-encoded_id\/comments":"\/snippets\/:workspace\/:encoded_id\/comments","\/snippets\/tonics-workspace\/tonics-encoded_id\/comments\/tonics-comment_id":"\/snippets\/:workspace\/:encoded_id\/comments\/:comment_id","\/snippets\/tonics-workspace\/tonics-encoded_id\/commits":"\/snippets\/:workspace\/:encoded_id\/commits","\/snippets\/tonics-workspace\/tonics-encoded_id\/commits\/tonics-revision":"\/snippets\/:workspace\/:encoded_id\/commits\/:revision","\/snippets\/tonics-workspace\/tonics-encoded_id\/files\/tonics-path":"\/snippets\/:workspace\/:encoded_id\/files\/:path","\/snippets\/tonics-workspace\/tonics-encoded_id\/watch":"\/snippets\/:workspace\/:encoded_id\/watch","\/snippets\/tonics-workspace\/tonics-encoded_id\/watchers":"\/snippets\/:workspace\/:encoded_id\/watchers","\/snippets\/tonics-workspace\/tonics-encoded_id\/tonics-node_id":"\/snippets\/:workspace\/:encoded_id\/:node_id","\/snippets\/tonics-workspace\/tonics-encoded_id\/tonics-node_id\/files\/tonics-path":"\/snippets\/:workspace\/:encoded_id\/:node_id\/files\/:path","\/snippets\/tonics-workspace\/tonics-encoded_id\/tonics-revision\/diff":"\/snippets\/:workspace\/:encoded_id\/:revision\/diff","\/snippets\/tonics-workspace\/tonics-encoded_id\/tonics-revision\/patch":"\/snippets\/:workspace\/:encoded_id\/:revision\/patch","\/teams":"\/teams","\/teams\/tonics-username":"\/teams\/:username","\/teams\/tonics-username\/followers":"\/teams\/:username\/followers","\/teams\/tonics-username\/following":"\/teams\/:username\/following","\/teams\/tonics-username\/members":"\/teams\/:username\/members","\/teams\/tonics-username\/permissions":"\/teams\/:username\/permissions","\/teams\/tonics-username\/permissions\/repositories":"\/teams\/:username\/permissions\/repositories","\/teams\/tonics-username\/permissions\/repositories\/tonics-repo_slug":"\/teams\/:username\/permissions\/repositories\/:repo_slug","\/teams\/tonics-username\/pipelines_config\/variables":"\/teams\/:username\/pipelines_config\/variables","\/teams\/tonics-username\/pipelines_config\/variables\/tonics-variable_uuid":"\/teams\/:username\/pipelines_config\/variables\/:variable_uuid","\/teams\/tonics-username\/projects":"\/teams\/:username\/projects","\/teams\/tonics-username\/projects\/tonics-project_key":"\/teams\/:username\/projects\/:project_key","\/teams\/tonics-username\/search\/code":"\/teams\/:username\/search\/code","\/teams\/tonics-workspace\/repositories":"\/teams\/:workspace\/repositories","\/user":"\/user","\/user\/emails":"\/user\/emails","\/user\/emails\/tonics-email":"\/user\/emails\/:email","\/user\/permissions\/repositories":"\/user\/permissions\/repositories","\/user\/permissions\/teams":"\/user\/permissions\/teams","\/user\/permissions\/workspaces":"\/user\/permissions\/workspaces","\/users\/tonics-selected_user":"\/users\/:selected_user","\/users\/tonics-selected_user\/pipelines_config\/variables":"\/users\/:selected_user\/pipelines_config\/variables","\/users\/tonics-selected_user\/pipelines_config\/variables\/tonics-variable_uuid":"\/users\/:selected_user\/pipelines_config\/variables\/:variable_uuid","\/users\/tonics-selected_user\/properties\/tonics-app_key\/tonics-property_name":"\/users\/:selected_user\/properties\/:app_key\/:property_name","\/users\/tonics-selected_user\/search\/code":"\/users\/:selected_user\/search\/code","\/users\/tonics-selected_user\/ssh-keys":"\/users\/:selected_user\/ssh-keys","\/users\/tonics-selected_user\/ssh-keys\/tonics-key_id":"\/users\/:selected_user\/ssh-keys\/:key_id","\/users\/tonics-username\/members":"\/users\/:username\/members","\/users\/tonics-workspace\/repositories":"\/users\/:workspace\/repositories","\/workspaces":"\/workspaces","\/workspaces\/tonics-workspace":"\/workspaces\/:workspace","\/workspaces\/tonics-workspace\/hooks":"\/workspaces\/:workspace\/hooks","\/workspaces\/tonics-workspace\/hooks\/tonics-uid":"\/workspaces\/:workspace\/hooks\/:uid","\/workspaces\/tonics-workspace\/members":"\/workspaces\/:workspace\/members","\/workspaces\/tonics-workspace\/members\/tonics-member":"\/workspaces\/:workspace\/members\/:member","\/workspaces\/tonics-workspace\/permissions":"\/workspaces\/:workspace\/permissions","\/workspaces\/tonics-workspace\/permissions\/repositories":"\/workspaces\/:workspace\/permissions\/repositories","\/workspaces\/tonics-workspace\/permissions\/repositories\/tonics-repo_slug":"\/workspaces\/:workspace\/permissions\/repositories\/:repo_slug","\/workspaces\/tonics-workspace\/pipelines-config\/identity\/oidc\/keys.json":"\/workspaces\/:workspace\/pipelines-config\/identity\/oidc\/keys.json","\/workspaces\/tonics-workspace\/pipelines-config\/variables":"\/workspaces\/:workspace\/pipelines-config\/variables","\/workspaces\/tonics-workspace\/pipelines-config\/variables\/tonics-variable_uuid":"\/workspaces\/:workspace\/pipelines-config\/variables\/:variable_uuid","\/workspaces\/tonics-workspace\/projects":"\/workspaces\/:workspace\/projects","\/workspaces\/tonics-workspace\/projects\/tonics-project_key":"\/workspaces\/:workspace\/projects\/:project_key","\/workspaces\/tonics-workspace\/search\/code":"\/workspaces\/:workspace\/search\/code"}
 JSO, true
         );
 
+        defineRoutes(array_values($urls), $route);
         matchURLS($urls, $routeTree);
     });
 });
+
+function defineRoutes(array $routes, Route $route): void
+{
+    foreach ($routes as $r){
+        $route->get( $r, function (){});
+    }
+}
 
 function matchURLS($urls, $routeTree): void
 {
@@ -451,200 +449,11 @@ function matchURLS($urls, $routeTree): void
     }
 }
 
-function mustNotMatchURLAndBe($urls, $routeTree, $andBe = null)
+function mustNotMatchURLAndBe($urls, $routeTree, $andBe = null): void
 {
     foreach ($urls as $url){
         it("expect $url to be null", function () use ($andBe, $url, $routeTree) {
             expect($routeTree->findURL($url)?->getFoundURLNode()?->getFullRoutePath())->toEqual($andBe);
         });
     }
-}
-
-function tonicsRoutesForBitBucket(Route $routes)
-{
-    $routes->get( '/addon', function (){});
-    $routes->get( '/addon/linkers', function (){});
-    $routes->get( '/addon/linkers/:linker_key', function (){});
-    $routes->get( '/addon/linkers/:linker_key/values', function (){});
-    $routes->get( '/addon/linkers/:linker_key/values/:value_id', function (){});
-    $routes->get( '/hook_events', function (){});
-    $routes->get( '/hook_events/:subject_type', function (){});
-    $routes->get( '/pullrequests/:selected_user', function (){});
-
-    $routes->get( '/repositories', function (){});
-    $routes->get( '/repositories/:workspace', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug', function (){});
-
-    $routes->get( '/repositories/:workspace/:repo_slug/branch-restrictions', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/branch-restrictions/:id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/branching-model', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/branching-model/settings', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/approve', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/comments', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/comments/:comment_id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/properties/:app_key/:property_name', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/pullrequests', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/reports', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/reports/:reportId', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/reports/:reportId/annotations', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/reports/:reportId/annotations/:annotationId', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/statuses', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/statuses/build', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commit/:commit/statuses/build/:key', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commits', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/commits/:revision', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/components', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/components/:component_id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/default-reviewers', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/default-reviewers/:target_username', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/deploy-keys', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/deploy-keys/:key_id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/deployments/', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/deployments/:deployment_uuid', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/deployments_config/environments/:environment_uuid/variables', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/deployments_config/environments/:environment_uuid/variables/:variable_uuid', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/diff/:spec', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/diffstat/:spec', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/downloads', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/downloads/:filename', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/environments/', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/environments/:environment_uuid', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/environments/:environment_uuid/changes/', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/filehistory/:commit/:path', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/forks', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/hooks', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/hooks/:uid', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/export', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/export/:repo_name-issues-task_id.zip', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/import', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/:issue_id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/:issue_id/attachments', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/:issue_id/attachments/:path', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/:issue_id/changes', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/:issue_id/changes/:change_id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/:issue_id/comments', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/:issue_id/comments/:comment_id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/:issue_id/vote', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/issues/:issue_id/watch', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/merge-base/:revspec', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/milestones', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/milestones/:milestone_id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/patch/:spec', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines-config/caches/', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines-config/caches/:cache_uuid', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines-config/caches/:cache_uuid/content-uri', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines/', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines/:pipeline_uuid', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines/:pipeline_uuid/steps/', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines/:pipeline_uuid/steps/:step_uuid', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines/:pipeline_uuid/steps/:step_uuid/log', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines/:pipeline_uuid/steps/:step_uuid/logs/:log_uuid', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines/:pipeline_uuid/steps/:step_uuid/test_reports', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines/:pipeline_uuid/steps/:step_uuid/test_reports/test_cases', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines/:pipeline_uuid/steps/:step_uuid/test_reports/test_cases/:test_case_uuid/test_case_reasons', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines/:pipeline_uuid/stopPipeline', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines_config', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines_config/build_number', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines_config/schedules/', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines_config/schedules/:schedule_uuid', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines_config/schedules/:schedule_uuid/executions/', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines_config/ssh/key_pair', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines_config/ssh/known_hosts/', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines_config/ssh/known_hosts/:known_host_uuid', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines_config/variables/', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pipelines_config/variables/:variable_uuid', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/properties/:app_key/:property_name', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/activity', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/activity', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/approve', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/comments', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/comments/:comment_id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/commits', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/decline', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/diff', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/diffstat', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/merge', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/merge/task-status/:task_id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/patch', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/request-changes', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pull_request_id/statuses', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/pullrequests/:pullrequest_id/properties/:app_key/:property_name', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/refs', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/refs/branches', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/refs/branches/:name', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/refs/tags', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/refs/tags/:name', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/src', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/src/:commit/:path', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/versions', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/versions/:version_id', function (){});
-    $routes->get( '/repositories/:workspace/:repo_slug/watchers', function (){});
-    $routes->get( '/snippets', function (){});
-
-    $routes->get( '/snippets/:workspace', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id/comments', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id/comments/:comment_id', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id/commits', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id/commits/:revision', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id/files/:path', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id/watch', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id/watchers', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id/:node_id', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id/:node_id/files/:path', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id/:revision/diff', function (){});
-    $routes->get( '/snippets/:workspace/:encoded_id/:revision/patch', function (){});
-
-    $routes->get( '/teams', function (){});
-    $routes->get( '/teams/:username', function (){});
-    $routes->get( '/teams/:username/followers', function (){});
-    $routes->get( '/teams/:username/following', function (){});
-    $routes->get( '/teams/:username/members', function (){});
-    $routes->get( '/teams/:username/permissions', function (){});
-    $routes->get( '/teams/:username/permissions/repositories', function (){});
-    $routes->get( '/teams/:username/permissions/repositories/:repo_slug', function (){});
-    $routes->get( '/teams/:username/pipelines_config/variables/', function (){});
-    $routes->get( '/teams/:username/pipelines_config/variables/:variable_uuid', function (){});
-    $routes->get( '/teams/:username/projects/', function (){});
-    $routes->get( '/teams/:username/projects/:project_key', function (){});
-    $routes->get( '/teams/:username/search/code', function (){});
-    $routes->get( '/teams/:workspace/repositories', function (){});
-
-
-    $routes->get( '/user', function (){});
-    $routes->get( '/user/emails', function (){});
-    $routes->get( '/user/emails/:email', function (){});
-    $routes->get( '/user/permissions/repositories', function (){});
-    $routes->get( '/user/permissions/teams', function (){});
-    $routes->get( '/user/permissions/workspaces', function (){});
-    $routes->get( '/users/:selected_user', function (){});
-    $routes->get( '/users/:selected_user/pipelines_config/variables/', function (){});
-    $routes->get( '/users/:selected_user/pipelines_config/variables/:variable_uuid', function (){});
-    $routes->get( '/users/:selected_user/properties/:app_key/:property_name', function (){});
-    $routes->get( '/users/:selected_user/search/code', function (){});
-    $routes->get( '/users/:selected_user/ssh-keys', function (){});
-    $routes->get( '/users/:selected_user/ssh-keys/:key_id', function (){});
-    $routes->get( '/users/:username/members', function (){});
-    $routes->get( '/users/:workspace/repositories', function (){});
-    $routes->get( '/workspaces', function (){});
-
-    $routes->get( '/workspaces/:workspace', function (){});
-    $routes->get( '/workspaces/:workspace/hooks', function (){});
-    $routes->get( '/workspaces/:workspace/hooks/:uid', function (){});
-    $routes->get( '/workspaces/:workspace/members', function (){});
-    $routes->get( '/workspaces/:workspace/members/:member', function (){});
-
-    $routes->get( '/workspaces/:workspace/permissions', function (){});
-    $routes->get( '/workspaces/:workspace/permissions/repositories', function (){});
-    $routes->get( '/workspaces/:workspace/permissions/repositories/:repo_slug', function (){});
-    $routes->get( '/workspaces/:workspace/pipelines-config/identity/oidc/keys.json', function (){});
-    $routes->get( '/workspaces/:workspace/pipelines-config/variables', function (){});
-    $routes->get( '/workspaces/:workspace/pipelines-config/variables/:variable_uuid', function (){});
-    $routes->get( '/workspaces/:workspace/projects', function (){});
-    $routes->get( '/workspaces/:workspace/projects/:project_key', function (){});
-    $routes->get( '/workspaces/:workspace/search/code', function (){});
 }
