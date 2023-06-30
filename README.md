@@ -8,11 +8,24 @@ hierarchically organized making it faster for finding both static or dynamic url
 * PHP 8.0 and above
 * PHP mbstring extension enabled.
 
-## Basic Explanation of How The Route Matching Works
+## Installation
 
-1. Step One, check if url exist in the staticURLS property of the $routeNodeTree, if it does, good, we return it, and we are done matching, if it doesn't, then we gotta walk the tree (goto Step 2):
-2. Before we walk the tree, we trim the REQUEST_URL (the one in GLOBAL $_SERVER) by solidus, e.g, if you have: `/home/in/` or `///home/in` then the trimmed result should be `home/in`, having done that, we split the trimmed result by solidus, which should give us `[home], [in],` once that is done, we prepend a solidus to the split result, giving `[/], [home], [in]`. Now, let's walk the tree (step 3):
-3. We recursively loop the nodes starting from `[/]` till we match a route node, once a route node is matched we store it in staticURLS property if the route is truly static. On a new route request, we jump back to (Step 1)
+```
+composer require devsrealm/tonics-router-system
+```
+
+If you don't want to use composer, go-to the release section and download the zip file that has a postfix of composer-no-required e.g tonics-router-system-v1.0.0-composer-no-required.zip
+
+Unzip it and require it like so:
+
+```
+require 'path/to/tonics-router-system/vendor/autoload.php';
+```
+
+## How The Router Works
+
+1. [A Faster Router System in PHP (Part 1)](https://tonics.app/posts/ff9af70984746b91/faster-router-php)
+2. [A Faster Router System in PHP (Part 2) (Improvement & Benchmarks)](https://tonics.app/posts/409a745fcbf15371/faster-router-system-in-php-part-2-improvement-and-benchmarks)
 
 ## Documentation
 
