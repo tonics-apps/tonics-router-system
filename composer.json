@@ -2,7 +2,7 @@
     "name": "devsrealm/tonics-router-system",
     "description": "An Imaginary PHP Router System For Tonics Projects",
     "type": "library",
-    "license": "",
+    "license": "Apache-2.0",
     "autoload": {
         "psr-4": {
             "Devsrealm\\TonicsRouterSystem\\": "src/"
@@ -15,7 +15,8 @@
         }
     ],
     "require": {
-      "ext-mbstring": "*"
+      "ext-mbstring": "*",
+        "php": "^8.0"
     },
     "require-dev": {
         "kahlan/kahlan": "dev-master"

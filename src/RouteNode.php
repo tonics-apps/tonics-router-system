@@ -610,6 +610,7 @@ class RouteNode
 
     /**
      * @param RouteNode|null $teleportNodeShortestPath
+     * @return RouteNode
      */
     public function setTeleportNodeShortestPath(?RouteNode $teleportNodeShortestPath): RouteNode
     {

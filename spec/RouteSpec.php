@@ -38,7 +38,6 @@ class FatherIntercept implements TonicsRouterRequestInterceptorInterface
 
 class MotherIntercept implements TonicsRouterRequestInterceptorInterface
 {
-
     public function handle(OnRequestProcess $request): void {}
 }
 
