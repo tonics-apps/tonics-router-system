@@ -14,7 +14,7 @@ hierarchically organized making it faster for finding both static or dynamic url
 composer require devsrealm/tonics-router-system
 ```
 
-If you don't want to use composer, go-to the release section and download the zip file that has a postfix of composer-no-required e.g tonics-router-system-v1.0.0-composer-no-required.zip
+If you don't want to use composer, go-to the release section and download the zip file that has a postfix of `composer-no-required` e.g `tonics-router-system-v1.0.0-composer-no-required.zip`
 
 Unzip it and require it like so:
 
