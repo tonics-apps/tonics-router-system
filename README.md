@@ -6,6 +6,8 @@ hierarchically organized making it faster for finding both static or dynamic url
 
 Additionally, I came up with a concept called Node Teleporting which can further enhance and speed up searching dynamic routes, in the best case, dynamic route would be matched directly just like the static routes, and in the worse case, it would teleport a couple of times which is also faster than mere traversing.
 
+You can learn more about the teleporting in the part 2 of how the router works.
+
 ## Requirements
 * PHP 8.0 and above
 * PHP mbstring extension enabled.
