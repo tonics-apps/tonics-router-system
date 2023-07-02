@@ -4,6 +4,8 @@ This would serve as a base router for tonics web apps, the router is different f
 in the sense that it doesn't use regex for matching urls, it instead uses a tree data structure where every path is
 hierarchically organized making it faster for finding both static or dynamic url.
 
+Additionally, I came up with a concept called Node Teleporting which can further enhance and speed up searching dynamic routes, in the best case, dynamic route would be matched directly just like the static routes, and in the worse case, it would teleport a couple of times which is also faster than mere traversing.
+
 ## Requirements
 * PHP 8.0 and above
 * PHP mbstring extension enabled.
