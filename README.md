@@ -78,6 +78,13 @@ $route = $router->getRoute();
 $route->get('/', function() {
     return 'Welcome To My Home Page';
 });
+
+// Once your route is set up, dispatch it (don't forget to do this once all your route is set-up, otherwise, it won't work):
+try {
+    $router->dispatchRequestURL();
+} catch (Exception $e) {
+    // handle error or 404
+}
 ```
 
 If you want to keep things organized, you can also resolve through a class method, like so:
