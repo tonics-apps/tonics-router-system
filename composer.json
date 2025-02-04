@@ -17,8 +17,5 @@
     "require": {
       "ext-mbstring": "*",
         "php": "^8.0"
-    },
-    "require-dev": {
-        "kahlan/kahlan": "dev-master"
     }
 }

@@ -19,7 +19,6 @@ namespace Devsrealm\TonicsRouterSystem;
 trait RouterFindURL
 {
     private ?RouteNode $foundURLNode = null;
-
     private array $foundURLRequiredParams = [];
 
     /**
@@ -29,6 +28,7 @@ trait RouterFindURL
     {
         return $this->foundURLNode;
     }
+
 
     /**
      * @param RouteNode|null $foundURLNode
@@ -65,6 +65,4 @@ trait RouterFindURL
     {
         return !empty($this->foundURLRequiredParams);
     }
-
-
 }

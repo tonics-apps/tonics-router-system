@@ -35,4 +35,16 @@ interface TonicsRouterRequestInputInterface
      * @return TonicsRouterRequestInputMethodsInterface
      */
     public function fromFile(array $data = []) : TonicsRouterRequestInputMethodsInterface;
+
+    /**
+     * @param array $data
+     * @return TonicsRouterRequestInputMethodsInterface
+     */
+    public function fromServer(array $data = []) : TonicsRouterRequestInputMethodsInterface;
+
+    /**
+     * @param array $data
+     * @return TonicsRouterRequestInputMethodsInterface
+     */
+    public function fromCookie(array $data = []) : TonicsRouterRequestInputMethodsInterface;
 }

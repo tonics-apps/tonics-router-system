@@ -53,6 +53,7 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
     private array $requestURLS = []; // only used when matching URL, not for building tree
 
     private bool $isStatic = true;
+    private bool $OptimalMatcher = true;
 
     #[Pure] public function __construct(RouteTreeGeneratorState $routeTreeGeneratorState, RouteNode $routeNode)
     {
@@ -76,6 +77,14 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
         $this->currentRouteTreeGeneratorState = RouteTreeGeneratorState::TonicsInitialStateHandler;
     }
 
+    /**
+     * @return $this
+     */
+    public function clone()
+    {
+        return unserialize(serialize($this));
+    }
+    
     public function initRouteTreeGeneratorState(array $routeSettings): void
     {
         $this->currentRouteSettings = [
@@ -335,8 +344,7 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
      */
     public function recursivelyUpdateTheNestedNodeUpUntilNoSiblingNode(RouteNode $node): void
     {
-        $parent = $node?->parentNode();
-
+        $parent = $node->parentNode();
         while ($parent !== null) {
             if (count($parent->childNodes()) > 1) {
                 foreach ($parent->getParentRecursive($parent) as $parentNode) {
@@ -406,6 +414,23 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
     }
 
     /**
+     * @param string $url
+     * @param bool $removeLeadingSlash
+     * @return string[]
+     */
+    public function convertRequestURLToArray(string $url, bool $removeLeadingSlash = true)
+    {
+        if ($removeLeadingSlash){
+            $url = $this->removingLeadingSlash($url);
+        }
+
+        $urlPaths =  explode('/', $url);
+        $urlPaths[0] = '/';
+
+        return $urlPaths;
+    }
+
+    /**
      * Matches URL and return the foundNode, otherwise, it returns null
      * @param string $url
      * @param bool $removeLeadingSlash
@@ -423,15 +448,10 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
      */
     public function findURL(string $url, bool $removeLeadingSlash = true): ?TonicsRouterFoundURLMethodsInterface
     {
-        if ($removeLeadingSlash){
-            $url = $this->removingLeadingSlash($url);
-        }
-
         $findNode = $this->canMatchStatic($url);
 
         if ($findNode === null){
-            $urlPaths =  explode('/', $url);
-            $urlPaths[0] = '/';
+            $urlPaths =  $this->convertRequestURLToArray($url, $removeLeadingSlash);
             $root = $this->routeNodeTree;
 
             $len = count($urlPaths);
@@ -463,9 +483,11 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
                             }
                         }
                     } else {
-                        $i = $lastIndex;
-                        $findNode = $teleportNode;
-                        $findNode->teleported($teleportNode);
+                        if ($this->isOptimalMatcher() === false){
+                            $i = $lastIndex;
+                            $findNode = $teleportNode;
+                            $findNode->teleported($teleportNode);
+                        }
                     }
                 }
 
@@ -485,15 +507,14 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
     }
 
     /**
-     * @param string $namedAlias
-     * The named alias, e.g posts.show
+     * @param string $namedAlias The named alias, e.g. posts.show
      * @param array $parameters
      * E.g If the url has "/admin/password/reset/:token1/:token2",
      * then pass [':token1' => 3373, ':token2' => 28232], you should make sure
      * the url has a unique paramname, having /home/:name/:name would replace both :name,
      * here is a trick for that, use a numbered array to overcome that limitation
      */
-    public function namedURL(string $namedAlias, array $parameters = [])
+    public function namedURL(string $namedAlias, array $parameters = []): string
     {
         if (key_exists($namedAlias, $this->routeNodeTree->alias)){
             /**
@@ -628,5 +649,22 @@ class RouteTreeGenerator implements TonicsRouterFoundURLMethodsInterface
     {
         $this->requestURLS = $requestURLS;
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isOptimalMatcher(): bool
+    {
+        return $this->OptimalMatcher;
+    }
+
+    /**
+     * If True, Teleporting won't be used for dynamic route
+     * @param bool $OptimalMatcher
+     */
+    public function setOptimalMatcher(bool $OptimalMatcher): void
+    {
+        $this->OptimalMatcher = $OptimalMatcher;
     }
 }

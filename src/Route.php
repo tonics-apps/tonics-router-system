@@ -69,24 +69,18 @@ class Route
         $this->removeProcessGroup();
     }
 
+    /**
+     * @return void
+     */
     protected function removeProcessGroup() :void
     {
-        $gPrefixKey = array_key_last($this->groupPrefix);
-        if ($gPrefixKey !== null){
-            unset($this->groupPrefix[$gPrefixKey]);
-            $this->groupPrefix = array_values($this->groupPrefix);
-        }
-
-        $gRequestInterceptorKey = array_key_last($this->groupRequestInterceptor);
-        if ($gRequestInterceptorKey !== null){
-            unset($this->groupRequestInterceptor[$gRequestInterceptorKey]);
-            $this->groupRequestInterceptor = array_values($this->groupRequestInterceptor);
-        }
-
-        $gAliasKey = array_key_last($this->groupAlias);
-        if ($gAliasKey !== null){
-            unset($this->groupAlias[$gAliasKey]);
-            $this->groupAlias = array_values($this->groupAlias);
+        $processes = ['groupPrefix', 'groupRequestInterceptor', 'groupAlias'];
+        foreach ($processes as $process){
+            $gKey = array_key_last($this->{$process});
+            if ($gKey !== null){
+                unset($this->{$process}[$gKey]);
+                $this->{$process} = array_values($this->{$process});
+            }
         }
     }
 
@@ -291,7 +285,8 @@ class Route
 
         if (!empty($settings)){
             foreach ($requestInterceptors as $requestInterceptor){
-                $settings['RequestInterceptors'][] = $requestInterceptor;
+                array_unshift($settings['RequestInterceptors'], $requestInterceptor);
+               // $settings['RequestInterceptors'][] = $requestInterceptor;
             }
 
             ## Convert $requestInterceptors multi-dimensional array to array

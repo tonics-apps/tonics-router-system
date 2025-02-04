@@ -84,6 +84,14 @@ class OnRequestProcess implements TonicsRequestInterface
     }
 
     /**
+     * @return $this|OnRequestProcess
+     */
+    public function clone()
+    {
+        return clone $this;
+    }
+
+    /**
      * Reset Request Global Vars, This shouldn't be cached cos we wouldn't wanna cache a single url for all request
      */
     public function reset(){
@@ -435,6 +443,15 @@ class OnRequestProcess implements TonicsRequestInterface
     public function isAjax(): bool
     {
         return (strtolower($this->getHeaderByKey('HTTP_X-REQUESTED_WITH')) === 'xmlhttprequest');
+    }
+
+    /**
+     * Check if the request is the result of a PJAX call.
+     * @return bool
+     */
+    public function isPjax()
+    {
+        return $this->getHeaderByKey('X-PJAX') == true;
     }
 
     /**

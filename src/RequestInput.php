@@ -41,7 +41,11 @@ class RequestInput implements TonicsRouterRequestInputInterface, TonicsRouterReq
         $this->currentHttpGlobalVariable = (array)$currentHttpGlobalVariable;
     }
 
-
+    /**
+     * @param $data
+     *
+     * @return TonicsRouterRequestInputMethodsInterface
+     */
     public function fromPost($data = []): TonicsRouterRequestInputMethodsInterface
     {
         if (empty($data)){
@@ -51,6 +55,11 @@ class RequestInput implements TonicsRouterRequestInputInterface, TonicsRouterReq
         return clone $this;
     }
 
+    /**
+     * @param array $data
+     *
+     * @return TonicsRouterRequestInputMethodsInterface
+     */
     public function fromGet(array $data = []): TonicsRouterRequestInputMethodsInterface
     {
         if (empty($data)){
@@ -60,6 +69,11 @@ class RequestInput implements TonicsRouterRequestInputInterface, TonicsRouterReq
         return clone $this;
     }
 
+    /**
+     * @param $data
+     *
+     * @return TonicsRouterRequestInputMethodsInterface
+     */
     public function fromFile($data = []): TonicsRouterRequestInputMethodsInterface
     {
         if (empty($data)){
@@ -69,10 +83,29 @@ class RequestInput implements TonicsRouterRequestInputInterface, TonicsRouterReq
         return clone $this;
     }
 
+    /**
+     * @param $data
+     *
+     * @return TonicsRouterRequestInputMethodsInterface
+     */
     public function fromServer($data = []): TonicsRouterRequestInputMethodsInterface
     {
         if (empty($data)){
             $data = $_SERVER;
+        }
+        $this->setCurrentHttpGlobalVariable($data);
+        return clone $this;
+    }
+
+    /**
+     * @param $data
+     *
+     * @return TonicsRouterRequestInputMethodsInterface
+     */
+    public function fromCookie($data = []): TonicsRouterRequestInputMethodsInterface
+    {
+        if (empty($data)){
+            $data = $_COOKIE;
         }
         $this->setCurrentHttpGlobalVariable($data);
         return clone $this;
