@@ -36,6 +36,17 @@ require 'path/to/tonics-router-system/vendor/autoload.php';
 Before you get started, wire up the Router dependencies:
 
 ```php
+use Devsrealm\TonicsRouterSystem\Container\Container;
+use Devsrealm\TonicsRouterSystem\Events\OnRequestProcess;
+use Devsrealm\TonicsRouterSystem\Handler\Router;
+use Devsrealm\TonicsRouterSystem\RequestInput;
+use Devsrealm\TonicsRouterSystem\Resolver\RouteResolver;
+use Devsrealm\TonicsRouterSystem\Response;
+use Devsrealm\TonicsRouterSystem\Route;
+use Devsrealm\TonicsRouterSystem\RouteNode;
+use Devsrealm\TonicsRouterSystem\RouteTreeGenerator;
+use Devsrealm\TonicsRouterSystem\State\RouteTreeGeneratorState;
+
 $onRequestProcess = new OnRequestProcess(
                         new RouteResolver(
                             new Container()
