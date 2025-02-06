@@ -136,6 +136,20 @@ class Route
      * @param null $moreSettings
      * @return $this
      */
+    public function options(string $url, Closure|array $callback, array $requestInterceptor = [], string $alias = '', $moreSettings = null): static
+    {
+        $this->resolveRouteSettings([RequestMethods::REQUEST_TYPE_OPTIONS], $url,  $callback, $requestInterceptor, $alias, $moreSettings);
+        return $this;
+    }
+
+    /**
+     * @param string $url
+     * @param Closure|array $callback
+     * @param array $requestInterceptor
+     * @param string $alias
+     * @param null $moreSettings
+     * @return $this
+     */
     public function head(string $url, Closure|array $callback, array $requestInterceptor = [], string $alias = '', $moreSettings = null): static
     {
         $this->resolveRouteSettings([RequestMethods::REQUEST_TYPE_HEAD], $url,  $callback, $requestInterceptor, $alias, $moreSettings);
