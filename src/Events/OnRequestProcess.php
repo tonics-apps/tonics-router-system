@@ -386,15 +386,16 @@ class OnRequestProcess implements TonicsRequestInterface
      */
     public function getBearerToken(): bool|string
     {
-        if (!key_exists('Authorization', getallheaders())){
-            return '';
+        foreach (getallheaders() as $key => $value) {
+            if (strcasecmp($key, 'Authorization') === 0) {
+                if (str_starts_with(strtolower($value), 'bearer ')) {
+                    return trim(substr($value, 7));
+                }
+                return '';
+            }
         }
 
-        $auth = getallheaders()['Authorization'];
-        if (!str_contains($auth, 'Bearer ')){
-            return '';
-        }
-        return trim(substr($auth, 7));
+        return '';
     }
 
     /**
