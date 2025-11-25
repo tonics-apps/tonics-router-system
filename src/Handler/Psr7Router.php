@@ -243,6 +243,24 @@ class Psr7Router
     }
 
     /**
+     * Get the Container for registering dependencies
+     * @return Container
+     */
+    public function getContainer(): Container
+    {
+        return $this->onRequestProcess->getRouteResolver()->getContainer();
+    }
+
+    /**
+     * Get the RouteResolver for advanced configuration
+     * @return RouteResolver
+     */
+    public function getRouteResolver(): RouteResolver
+    {
+        return $this->onRequestProcess->getRouteResolver();
+    }
+
+    /**
      * Get the PSR-7 response adapter
      * @return Psr7ResponseAdapter
      */

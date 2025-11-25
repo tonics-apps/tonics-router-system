@@ -327,6 +327,80 @@ $psrResponse = $router->handle($psrRequest);
 $router->emit($psrResponse);
 ```
 
+
+### Creating Router with Custom Container
+
+```php
+use Devsrealm\TonicsRouterSystem\Handler\Psr7Router;
+use Devsrealm\TonicsRouterSystem\Container\Container;
+use Devsrealm\TonicsRouterSystem\Resolver\RouteResolver;
+use Devsrealm\TonicsRouterSystem\Psr7Factory;
+
+// Create and configure your container
+$container = new Container();
+
+// Register all your dependencies
+$container->set(DatabaseInterface::class, fn() => new MySQLDatabase());
+$container->set(UserRepository::class, fn($c) => new UserRepository($c->get(DatabaseInterface::class)));
+// ... more registrations
+
+// Create route resolver with your configured container
+$routeResolver = new RouteResolver($container);
+
+// Create PSR-7 request
+$psrRequest = Psr7Factory::createServerRequestFromGlobals();
+
+// Create router with custom resolver
+$router = new Psr7Router($psrRequest, $routeResolver);
+
+// Now define routes
+$router->getRoute()->get('/', [HomeController::class, 'index']);
+$router->run();
+```
+
+### Auto-wiring Example
+
+The container can automatically resolve dependencies if they're type-hinted:
+
+```php
+$router = Psr7Router::create();
+
+// Register only what can't be auto-resolved (primitives, interfaces, etc.)
+$router->getContainer()->set(DatabaseInterface::class, function() {
+    return new MySQLDatabase('localhost', 'mydb', 'user', 'pass');
+});
+
+// These classes will be auto-resolved
+class EmailService {
+    // No dependencies - will be auto-created
+}
+
+class UserRepository {
+    // DatabaseInterface must be registered (interface)
+    public function __construct(private DatabaseInterface $db) {}
+}
+
+class UserService {
+    // UserRepository will be auto-created, EmailService will be auto-created
+    public function __construct(
+        private UserRepository $repo,
+        private EmailService $email
+    ) {}
+}
+
+class UserController {
+    // UserService and all its dependencies will be auto-resolved!
+    public function __construct(private UserService $service) {}
+    
+    public function show($id) {
+        return json_encode($this->service->findById($id));
+    }
+}
+
+// Just register the route - everything else is automatic!
+$router->getRoute()->get('/users/:id', [UserController::class, 'show']);
+```
+
 ### Using PSR-7 Request Adapter
 
 You can also use PSR-7 requests with individual components:
@@ -650,6 +724,143 @@ class Psr7UserController
         }
         
         return json_encode(['id' => $user->id, 'name' => $user->name]);
+    }
+}
+```
+
+### Complete Example with Container + PSR-7
+
+Here's a full real-world example showing how everything works together:
+
+```php
+use Devsrealm\TonicsRouterSystem\Handler\Psr7Router;
+
+// 1. Create router
+$router = Psr7Router::create();
+
+// 2. Configure container with your dependencies
+$container = $router->getContainer();
+
+// Register database
+$container->singleton(PDO::class, function() {
+    return new PDO('mysql:host=localhost;dbname=myapp', 'user', 'pass');
+});
+
+// Register repositories
+$container->set(UserRepository::class, function($c) {
+    return new UserRepository($c->get(PDO::class));
+});
+
+$container->set(PostRepository::class, function($c) {
+    return new PostRepository($c->get(PDO::class));
+});
+
+// Register services
+$container->set(UserService::class, function($c) {
+    return new UserService(
+        $c->get(UserRepository::class),
+        $c->get(EmailService::class)
+    );
+});
+
+$container->set(EmailService::class, function() {
+    return new EmailService(getenv('SMTP_HOST'), getenv('SMTP_PORT'));
+});
+
+// 3. Define your routes
+$router->getRoute()->get('/', [HomeController::class, 'index']);
+$router->getRoute()->get('/users/:id', [UserController::class, 'show']);
+$router->getRoute()->post('/users', [UserController::class, 'store']);
+$router->getRoute()->get('/posts/:slug', [PostController::class, 'show']);
+
+// 4. Run the application
+$router->run();
+
+// Controller examples
+class HomeController {
+    public function index() {
+        return json_encode(['message' => 'Welcome to our API']);
+    }
+}
+
+class UserController {
+    // Dependencies auto-injected via container
+    public function __construct(
+        private UserService $userService,
+        private UserRepository $userRepo
+    ) {}
+    
+    public function show($id) {
+        try {
+            $user = $this->userService->findById($id);
+            return json_encode(['user' => $user]);
+        } catch (NotFoundException $e) {
+            http_response_code(404);
+            return json_encode(['error' => 'User not found']);
+        }
+    }
+    
+    public function store() {
+        // Using PSR-7 request in constructor
+        $data = json_decode(file_get_contents('php://input'), true);
+        
+        $user = $this->userService->createUser(
+            $data['name'] ?? '',
+            $data['email'] ?? ''
+        );
+        
+        http_response_code(201);
+        return json_encode(['user' => $user]);
+    }
+}
+
+class PostController {
+    public function __construct(private PostRepository $postRepo) {}
+    
+    public function show($slug) {
+        $post = $this->postRepo->findBySlug($slug);
+        
+        if (!$post) {
+            http_response_code(404);
+            return json_encode(['error' => 'Post not found']);
+        }
+        
+        return json_encode(['post' => $post]);
+    }
+}
+
+// Service layer
+class UserService {
+    public function __construct(
+        private UserRepository $userRepo,
+        private EmailService $emailService
+    ) {}
+    
+    public function findById($id) {
+        return $this->userRepo->find($id);
+    }
+    
+    public function createUser(string $name, string $email) {
+        $user = $this->userRepo->create(['name' => $name, 'email' => $email]);
+        $this->emailService->sendWelcome($user->email);
+        return $user;
+    }
+}
+
+// Repository layer
+class UserRepository {
+    public function __construct(private PDO $db) {}
+    
+    public function find($id) {
+        $stmt = $this->db->prepare('SELECT * FROM users WHERE id = ?');
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_OBJ);
+    }
+    
+    public function create(array $data) {
+        $stmt = $this->db->prepare('INSERT INTO users (name, email) VALUES (?, ?)');
+        $stmt->execute([$data['name'], $data['email']]);
+        return $this->find($this->db->lastInsertId());
     }
 }
 ```
