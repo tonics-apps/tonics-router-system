@@ -1,25 +1,24 @@
 {
-    "name": "devsrealm/tonics-router-system",
-    "description": "An Imaginary PHP Router System For Tonics Projects",
-    "type": "library",
-    "license": "Apache-2.0",
-    "autoload": {
-        "psr-4": {
-            "Devsrealm\\TonicsRouterSystem\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Olayemi Faruq",
-            "email": "olayemi@tonics.app"
-        }
-    ],
-    "require": {
-        "ext-mbstring": "*",
-        "php": "^8.0",
-        "nyholm/psr7": "^1.8",
-        "psr/http-message": "^1.0 || ^2.0",
-        "psr/http-factory": "^1.0"
-    },
-    "suggest": {
-        "nyholm/psr7": "For PSR-7 support (HTTP message interfaces)"
+  "name": "devsrealm/tonics-router-system",
+  "description": "An Imaginary PHP Router System For Tonics Projects",
+  "type": "library",
+  "license": "Apache-2.0",
+  "autoload": {
+    "psr-4": {
+      "Devsrealm\\TonicsRouterSystem\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Olayemi Faruq",
+      "email": "olayemi@tonics.app"
+    }
+  ],
+  "require": {
+    "ext-mbstring": "*",
+    "php": "^8.0",
+    "nyholm/psr7": "^1.8",
+    "psr/http-message": "^1.0 || ^2.0",
+    "psr/http-factory": "^1.0"
+  }
+}
