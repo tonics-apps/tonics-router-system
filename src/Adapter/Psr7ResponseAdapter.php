@@ -79,8 +79,6 @@ class Psr7ResponseAdapter
         }
 
         $this->psrResponse = $this->psrResponse->withHeader('Location', $url);
-        $this->emit();
-        exit(0);
     }
 
     /**
@@ -102,9 +100,9 @@ class Psr7ResponseAdapter
      * @param array|JsonSerializable $value
      * @param ?int $options JSON options
      * @param int $dept JSON depth
-     * @throws InvalidArgumentException
+     * @return string
      */
-    public function json(array|JsonSerializable $value, ?int $options = null, int $dept = 512): void
+    public function json(array|JsonSerializable $value, ?int $options = null, int $dept = 512): string
     {
         if (!$value instanceof JsonSerializable && !is_array($value)){
             throw new InvalidArgumentException('`value` must be of type array or object that is an instance of JsonSerializable Interface.');
@@ -115,9 +113,10 @@ class Psr7ResponseAdapter
         $this->psrResponse = $this->psrResponse
             ->withHeader('Content-Type', 'application/json; charset=utf-8');
 
+        // Write to body so it's in the response
         $this->psrResponse->getBody()->write($json);
-        $this->emit();
-        exit(0);
+
+        return $json;
     }
 
     /**
@@ -125,10 +124,11 @@ class Psr7ResponseAdapter
      * @param string $message
      * @param int $code
      * @param null $more
+     * @return string
      */
-    public function onSuccess($data, string $message = '', int $code = 200, $more = null): void
+    public function onSuccess($data, string $message = '', int $code = 200, $more = null): string
     {
-        $this->httpResponseCode($code)->json([
+        return $this->httpResponseCode($code)->json([
             'status' => $code,
             'message' => $message,
             'data' => $data,
@@ -139,10 +139,11 @@ class Psr7ResponseAdapter
     /**
      * @param int $code
      * @param string $message
+     * @return string
      */
-    public function onError(int $code, string $message = ''): void
+    public function onError(int $code, string $message = ''): string
     {
-        $this->httpResponseCode($code)->json([
+        return $this->httpResponseCode($code)->json([
             'status' => $code,
             'message' => $message,
         ], JSON_PRETTY_PRINT);
@@ -192,10 +193,14 @@ class Psr7ResponseAdapter
     }
 
     /**
+     * DO NOT USE
+     * @DEPRECATED send directly to body instead using write()
+     * Set the response body
+     *
      * Emit the PSR-7 response (send headers and body)
      * This is typically called automatically by json() and redirect()
      */
-    public function emit(): void
+    private function emit(): void
     {
         // Emit status line
         if (!headers_sent()) {

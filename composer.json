@@ -23,5 +23,3 @@
     },
     "suggest": {
         "nyholm/psr7": "For PSR-7 support (HTTP message interfaces)"
-    }
-}
