@@ -75,12 +75,72 @@ class Psr7RequestAdapter implements TonicsRouterRequestInputInterface, TonicsRou
     public function fromPost($data = []): TonicsRouterRequestInputMethodsInterface
     {
         if (empty($data)){
+            // First try getParsedBody() - works for form-urlencoded and multipart/form-data
             $parsedBody = $this->psrRequest->getParsedBody();
-            $data = is_array($parsedBody) ? $parsedBody : [];
+
+            if (is_array($parsedBody)) {
+                $data = $parsedBody;
+            } else {
+                // getParsedBody() returned null - parse the raw body based on Content-Type
+                $data = $this->parseRequestBody();
+            }
         }
         $clone = clone $this;
         $clone->setCurrentData($data);
         return $clone;
+    }
+
+    /**
+     * Parse raw request body based on Content-Type
+     * Supports: application/json, application/x-www-form-urlencoded, and others
+     *
+     * @return array
+     */
+    private function parseRequestBody(): array
+    {
+        $body = (string) $this->psrRequest->getBody();
+
+        // Empty body
+        if (empty($body)) {
+            return [];
+        }
+
+        $contentType = $this->psrRequest->getHeaderLine('Content-Type');
+
+        // Parse JSON
+        if (str_contains($contentType, 'application/json')) {
+            try {
+                $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+                return is_array($decoded) ? $decoded : [];
+            } catch (\JsonException $e) {
+                // Invalid JSON - return empty array
+                return [];
+            }
+        }
+
+        // Parse form-urlencoded (fallback if PSR-7 didn't parse it)
+        if (str_contains($contentType, 'application/x-www-form-urlencoded')) {
+            parse_str($body, $parsed);
+            return is_array($parsed) ? $parsed : [];
+        }
+
+        // For other content types, try JSON first, then form-urlencoded
+        // This allows flexibility for APIs that don't set Content-Type correctly
+
+        // Try JSON
+        $decoded = @json_decode($body, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        // Try form-urlencoded
+        parse_str($body, $parsed);
+        if (is_array($parsed) && !empty($parsed)) {
+            return $parsed;
+        }
+
+        // Unable to parse - return empty array
+        return [];
     }
 
     /**
