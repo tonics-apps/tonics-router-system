@@ -412,8 +412,9 @@ class RouteNode
         if (isset($childNodes[$routeName])){
             $resNode =  $childNodes[$routeName];
         } else {
-            $resNode = $node->childNodes()[$node->positionOfLastAddedRequiredParamChildNode] ?? null;
-        }
+            $resNode = ($node->positionOfLastAddedRequiredParamChildNode !== null)
+                            ? ($node->childNodes()[$node->positionOfLastAddedRequiredParamChildNode] ?? null)
+                            : null;        }
         return $resNode;
     }
 
