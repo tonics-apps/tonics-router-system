@@ -180,7 +180,7 @@ class RouteNode
      * otherwise, it would be pushed to the bottom of the stack
      * @return $this
      */
-    public function addNode(RouteNode $node, int $position = null): static
+    public function addNode(RouteNode $node, ?int $position = null): static
     {
         if ($position !== null) {
             $array = $this->nodes;

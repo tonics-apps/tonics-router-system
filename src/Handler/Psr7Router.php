@@ -65,8 +65,8 @@ class Psr7Router
      */
     public function __construct(
         ServerRequestInterface $psrRequest,
-        RouteResolver $routeResolver = null,
-        Route $routeObject = null
+        ?RouteResolver         $routeResolver = null,
+        ?Route                 $routeObject = null
     ) {
         $this->psrRequest = $psrRequest;
 

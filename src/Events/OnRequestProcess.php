@@ -70,7 +70,7 @@ class OnRequestProcess implements TonicsRequestInterface
      * OnRequestProcessing constructor.
      * @param TonicsRouterResolverInterface|null $routeResolver
      */
-    public function __construct(TonicsRouterResolverInterface $routeResolver = null, Route $routeObject = null) {
+    public function __construct(?TonicsRouterResolverInterface $routeResolver = null, ?Route $routeObject = null) {
 
         if ($routeResolver){
             $this->routeResolver = $routeResolver;
@@ -291,7 +291,7 @@ class OnRequestProcess implements TonicsRequestInterface
      * Callback would be called on value if the param key value is not empty
      * @return string|array|null
      */
-    public function getParam(string $name, ?string $defaultValue = null, \Closure $callback = null): string|array|null
+    public function getParam(string $name, ?string $defaultValue = null, ?\Closure $callback = null): string|array|null
     {
         $paramVal = (isset($this->getParams()[$name])) ? $this->getParams()[$name] : $defaultValue;
         if ($callback && $paramVal){

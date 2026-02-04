@@ -26,7 +26,7 @@ class Response
     protected OnRequestProcess $onRequestProcess;
     private TonicsRouterRequestInputInterface $requestInput;
 
-    public function __construct(OnRequestProcess $onRequestProcess = null, TonicsRouterRequestInputInterface $requestInput = null)
+    public function __construct(?OnRequestProcess $onRequestProcess = null, ?TonicsRouterRequestInputInterface $requestInput = null)
     {
         if ($onRequestProcess){
             $this->onRequestProcess = $onRequestProcess;

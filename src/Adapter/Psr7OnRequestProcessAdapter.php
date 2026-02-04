@@ -33,9 +33,9 @@ class Psr7OnRequestProcessAdapter extends OnRequestProcess
     private ServerRequestInterface $psrRequest;
 
     public function __construct(
-        ServerRequestInterface $psrRequest,
-        TonicsRouterResolverInterface $routeResolver = null,
-        Route $routeObject = null
+        ServerRequestInterface         $psrRequest,
+        ?TonicsRouterResolverInterface $routeResolver = null,
+        ?Route                         $routeObject = null
     ) {
         $this->psrRequest = $psrRequest;
         parent::__construct($routeResolver, $routeObject);

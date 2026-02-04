@@ -25,7 +25,7 @@ class RouteResolver implements TonicsRouterResolverInterface
 
     private ?Container $container = null;
 
-    public function __construct(Container $container = null)
+    public function __construct(?Container $container = null)
     {
         if ($container){
             $this->container = $container;
