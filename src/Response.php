@@ -19,6 +19,7 @@ namespace Devsrealm\TonicsRouterSystem;
 use Devsrealm\TonicsRouterSystem\Events\OnRequestProcess;
 use Devsrealm\TonicsRouterSystem\Interfaces\TonicsRouterRequestInputInterface;
 use InvalidArgumentException;
+use JetBrains\PhpStorm\NoReturn;
 use JsonSerializable;
 
 class Response
@@ -62,6 +63,7 @@ class Response
      * @param string $url
      * @param ?int $httpCode
      */
+    #[NoReturn]
     public function redirect(string $url, ?int $httpCode = null): void
     {
         if ($httpCode !== null) {
@@ -96,6 +98,7 @@ class Response
      * @param int|null $httpCode
      * @param string $reason
      */
+    #[NoReturn]
     public function reject(string $url = '/404', ?int $httpCode = null, string $reason = 'Unknown Request')
     {
         setcookie("FlashMessage", $reason, time() + 10);
@@ -126,7 +129,7 @@ class Response
      * @param int $dept JSON debt.
      * @throws InvalidArgumentException
      */
-    public function json(array|JsonSerializable $value, ?int $options = null, int $dept = 512): void
+    public function json(array|JsonSerializable $value, ?int $options = 0, int $dept = 512): void
     {
         if (!$value instanceof JsonSerializable && !is_array($value)){
             throw new InvalidArgumentException('`value` must be of type array or object that is an instance of JsonSerializable Interface.');
